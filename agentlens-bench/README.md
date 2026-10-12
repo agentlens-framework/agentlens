@@ -209,3 +209,17 @@ Configuration: `merge_k=5, seed=42, task_timeout=300s`
 ## License
 
 This dataset is released under the [Creative Commons Attribution 4.0 International License (CC-BY-4.0)](LICENSE).
+
+## Citation
+
+AgentLens-Bench was introduced in [AgentLens: Revealing The Lucky Pass Problem in SWE-Agent Evaluation](https://arxiv.org/abs/2605.12925) (NeurIPS 2026). If you use it, please cite:
+
+```bibtex
+@inproceedings{sahoo2026agentlens,
+  title     = {AgentLens: Revealing The Lucky Pass Problem in SWE-Agent Evaluation},
+  author    = {Sahoo, Priyam and Mittal, Gaurav and Li, Xiaomin and Ma, Shengjie and Steenhoek, Benjamin and Lin, Pingping and Hu, Yu},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
+  year      = {2026},
+  url       = {https://arxiv.org/abs/2605.12925}
+}
+```

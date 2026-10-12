@@ -10,7 +10,13 @@ readme = "README.md"
 license = "MIT"
 requires-python = ">=3.9"
 authors = [
-    { name = "Anonymous" },
+    { name = "Priyam Sahoo" },
+    { name = "Gaurav Mittal" },
+    { name = "Xiaomin Li" },
+    { name = "Shengjie Ma" },
+    { name = "Benjamin Steenhoek" },
+    { name = "Pingping Lin" },
+    { name = "Yu Hu" },
 ]
 keywords = ["swe", "agent", "trace", "analysis", "sdk"]
 classifiers = [
@@ -41,7 +47,8 @@ dev = [
 ]
 
 [project.urls]
-Repository = "https://anonymous.4open.science/"
+Repository = "https://github.com/priyamsahoo/agentlens-app"
+Paper = "https://arxiv.org/abs/2605.12925"
 
 [tool.setuptools.packages.find]
 where = ["src"]

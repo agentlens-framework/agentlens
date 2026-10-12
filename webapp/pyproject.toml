@@ -9,6 +9,15 @@ description = "Qualitative assessment dashboard for coding agent trajectories."
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.9"
+authors = [
+    { name = "Priyam Sahoo" },
+    { name = "Gaurav Mittal" },
+    { name = "Xiaomin Li" },
+    { name = "Shengjie Ma" },
+    { name = "Benjamin Steenhoek" },
+    { name = "Pingping Lin" },
+    { name = "Yu Hu" },
+]
 
 dependencies = [
     "swe-trace-sdk",
@@ -23,6 +32,10 @@ dev = [
     "pytest>=7.0",
     "httpx>=0.24",
 ]
+
+[project.urls]
+Repository = "https://github.com/priyamsahoo/agentlens-app"
+Paper = "https://arxiv.org/abs/2605.12925"
 
 [tool.setuptools.packages.find]
 include = ["backend*"]
