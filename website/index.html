@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AgentLens</title>
+<meta name="description" content="AgentLens: Revealing The Lucky Pass Problem in SWE-Agent Evaluation. NeurIPS 2026.">
+<meta property="og:title" content="AgentLens: Revealing The Lucky Pass Problem in SWE-Agent Evaluation">
+<meta property="og:description" content="Process-level assessment of SWE-agent trajectories. 10.7% of passing trajectories are Lucky Passes. NeurIPS 2026.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap">
+<style>
+/* Layout: one centered column; every block (text, figures, tables, code) shares the same width and edges. Headings centered, prose justified. */
+:root {
+  --bg: #ffffff;
+  --ink: #161b24;
+  --muted: #5a6372;
+  --rule: #e4e7ec;
+  --accent: #2c5a9a;      /* deepened Exploration blue from the paper's stage palette */
+  --code-bg: #f5f7fa;
+  --stage-e: #dae8fc; --stage-e-ink: #3d5f8f;
+  --stage-i: #d5e8d4; --stage-i-ink: #3f6b3c;
+  --stage-v: #ffe6cc; --stage-v-ink: #8a5a00;
+  --stage-o: #ececee; --stage-o-ink: #4d4f57;
+  --lucky: #c2413a;
+
+  --font-display: "Newsreader", "Iowan Old Style", Georgia, serif;
+  --font-body: "IBM Plex Sans", -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --text: 1.0625rem;
+  --small: 0.9rem;
+  --tiny: 0.8rem;
+  --h2: 1.6rem;
+  --h1: clamp(1.9rem, 4.6vw, 2.75rem);
+  --col: 780px;
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+html { background: var(--bg); }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 400 var(--text)/1.7 var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+.page {
+  max-width: var(--col);
+  margin: 0 auto;
+  padding-inline: 20px;
+  padding-block: 64px 72px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 72px;
+}
+a { color: var(--accent); text-underline-offset: 2px; }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+
+/* Header */
+header { text-align: center; display: grid; gap: 16px; justify-items: center; }
+.venue {
+  font: 500 var(--tiny)/1 var(--font-mono);
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--muted);
+}
+h1 {
+  margin: 0; max-width: 26ch;
+  font: 600 var(--h1)/1.15 var(--font-display);
+  letter-spacing: -0.01em; text-wrap: balance;
+}
+.nowrap { white-space: nowrap; }
+h1 .name { display: block; font-size: 1.25em; letter-spacing: -0.02em; margin-bottom: 0.15em; }
+.authors { margin: 6px 0 0; line-height: 1.7; text-align: center; }
+.authors span { white-space: nowrap; }
+.authors sup, .affil sup, .notes sup { font-size: 0.7em; color: var(--muted); }
+.affil, .notes { margin: 0; color: var(--muted); font-size: var(--small); text-align: center; }
+.notes { font-size: var(--tiny); }
+.links { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 8px; }
+.links a {
+  display: inline-block; padding: 8px 20px;
+  background: var(--ink); color: var(--bg);
+  border: 1px solid var(--ink); border-radius: 999px;
+  text-decoration: none;
+  font: 500 var(--small)/1.2 var(--font-body);
+  transition: background .15s, color .15s;
+}
+.links a:hover { background: var(--bg); color: var(--ink); }
+
+/* Sections */
+section { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; min-width: 0; }
+h2 {
+  margin: 0; text-align: center;
+  font: 600 var(--h2)/1.2 var(--font-display);
+  text-wrap: balance;
+}
+h3 { margin: 16px 0 0; text-align: center; font: 600 1.1rem/1.35 var(--font-body); text-wrap: balance; }
+p { margin: 0; }
+.prose { display: grid; gap: 14px; }
+.prose p, figcaption {
+  text-align: justify; text-justify: inter-word;
+  hyphens: auto; -webkit-hyphens: auto;
+}
+.center { text-align: center; }
+code { font: 400 0.88em/1 var(--font-mono); background: var(--code-bg); padding: 2px 5px; border-radius: 4px; }
+
+/* Figures: image and caption share the column edges */
+figure { margin: 0; display: grid; gap: 12px; }
+figure img { display: block; width: 100%; height: auto; }
+figcaption { font-size: var(--small); color: var(--muted); line-height: 1.6; }
+figcaption b { color: var(--ink); font-weight: 600; }
+
+/* Stage chips (paper's intent-stage palette) */
+.stage {
+  display: inline-block; padding: 0 7px; border-radius: 4px;
+  font: 500 0.92em/1.5 var(--font-body); white-space: nowrap;
+}
+.stage.e { background: var(--stage-e); color: var(--stage-e-ink); }
+.stage.i { background: var(--stage-i); color: var(--stage-i-ink); }
+.stage.v { background: var(--stage-v); color: var(--stage-v-ink); }
+.stage.o { background: var(--stage-o); color: var(--stage-o-ink); }
+
+/* Tables: full column width, booktabs rules */
+.table-wrap { overflow-x: auto; min-width: 0; }
+table { border-collapse: collapse; width: 100%; font-size: var(--small); font-variant-numeric: tabular-nums; }
+caption { caption-side: top; text-align: center; color: var(--muted); padding-bottom: 12px; line-height: 1.55; }
+caption b { color: var(--ink); font-weight: 600; }
+th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+thead th { font-weight: 600; border-top: 1.5px solid var(--ink); border-bottom: 1px solid var(--ink); }
+tbody tr:last-child td { border-bottom: 1.5px solid var(--ink); }
+td.num, th.num { text-align: center; }
+td.model { font-family: var(--font-mono); font-size: 0.95em; }
+.lucky-hi { color: var(--lucky); font-weight: 600; }
+
+/* Bench facts: four equal columns across the column width */
+.facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin: 4px 0 0; padding: 18px 0; list-style: none; border-block: 1px solid var(--rule); text-align: center; }
+.facts li { color: var(--muted); font-size: var(--small); line-height: 1.4; }
+.facts b { display: block; color: var(--ink); font: 600 1.6rem/1.2 var(--font-display); font-variant-numeric: tabular-nums; }
+
+/* BibTeX */
+.bib { position: relative; min-width: 0; }
+pre {
+  margin: 0; padding: 18px 20px; overflow-x: auto;
+  background: var(--code-bg); border: 1px solid var(--rule); border-radius: 6px;
+  font: 400 0.8rem/1.6 var(--font-mono); text-align: left;
+}
+.copy {
+  position: absolute; top: 10px; right: 10px;
+  padding: 4px 12px; border: 1px solid var(--rule); border-radius: 999px;
+  background: var(--bg); color: var(--muted); cursor: pointer;
+  font: 500 var(--tiny)/1.4 var(--font-body);
+}
+.copy:hover { color: var(--accent); border-color: var(--accent); }
+
+footer { color: var(--muted); font-size: var(--tiny); border-top: 1px solid var(--rule); padding-top: 20px; text-align: center; }
+
+@media (max-width: 560px) {
+  .page { padding-inline: 16px; padding-block: 40px 56px; gap: 52px; }
+  .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 18px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<main class="page" lang="en">
+
+  <header>
+    <div class="venue">NeurIPS 2026</div>
+    <h1><span class="name">AgentLens</span>Revealing The Lucky Pass Problem in <span class="nowrap">SWE-Agent</span> Evaluation</h1>
+    <p class="authors">
+      <span>Priyam Sahoo<sup>1,2,*</sup>,</span>
+      <span>Gaurav Mittal<sup>2,†</sup>,</span>
+      <span>Xiaomin Li<sup>2,†</sup>,</span>
+      <span>Shengjie Ma<sup>2</sup>,</span>
+      <span>Benjamin Steenhoek<sup>2</sup>,</span>
+      <span>Pingping Lin<sup>2</sup>,</span>
+      <span>Yu Hu<sup>2</sup></span>
+    </p>
+    <p class="affil"><sup>1</sup>University of Illinois Urbana-Champaign &nbsp;&nbsp; <sup>2</sup>Microsoft</p>
+    <p class="notes"><sup>*</sup>Work done as a student researcher while at Microsoft. &nbsp; <sup>†</sup>Co-second authors.</p>
+    <nav class="links" aria-label="Project links">
+      <a href="https://arxiv.org/abs/2605.12925">Paper</a>
+      <a href="https://github.com/priyamsahoo/agentlens-app">Code</a>
+      <a href="https://github.com/priyamsahoo/agentlens-app/tree/main/agentlens-bench">Dataset</a>
+      <a href="https://neurips.cc/virtual/2026/loc/sydney/poster/138951">Poster</a>
+      <a href="#bibtex">BibTeX</a>
+    </nav>
+  </header>
+
+  <figure class="teaser">
+    <img src="assets/quality_distribution.png" width="1600" height="1011"
+         alt="Histogram of quality scores for 1,136 passing trajectories, split into Lucky (122, 10.7%), Solid (785, 69.1%) and Ideal (229, 20.2%) bands.">
+    <figcaption><b>Passing trajectories are not behaviorally homogeneous.</b> Among 1,136 passing trajectories in AgentLens-Bench, AgentLens classifies 229 as Ideal (20.2%), 785 as Solid (69.1%), and 122 as Lucky (10.7%). Binary evaluation treats all of these trajectories as equally successful, while process-aware scoring separates direct, coherent solutions from weak processes that happen to pass.</figcaption>
+  </figure>
+
+  <section id="abstract">
+    <h2>Abstract</h2>
+    <div class="prose">
+      <p>Evaluation of software engineering (SWE) agents is dominated by a binary signal: whether the final patch passes the tests. This outcome-only view treats a principled solution and a chaotic trial-and-error process as equivalent. We show that this equivalence is empirically false.</p>
+      <p>We evaluate 2,614 OpenHands trajectories from eight model backends on SWE-bench Verified. Of the 60 tasks in this corpus, 47 have enough passing trajectories to construct task-level process references, yielding a 1,815-trajectory evaluation subset. Among passing trajectories in this subset, 10.7% exhibit behavior we call a <em>Lucky Pass</em>: regression cycles, blind retries, missing verification, or temporally disordered exploration, implementation, and verification.</p>
+      <p>We introduce <b>AgentLens</b>, a framework for process-level assessment of SWE-agent trajectories, and define <b>AgentLens-Bench</b>, a dataset of 1,815 trajectories annotated with quality scores, waste signals, divergence points, and 47 task-level Prefix Tree Acceptor (PTA) references. AgentLens combines two components. First, it merges multiple passing solutions for the same task into a PTA reference space of correct behaviors. Second, it uses a context-sensitive intent-stage labeler that assigns actions to <em>Exploration</em>, <em>Implementation</em>, <em>Verification</em>, or <em>Orchestration</em> using trajectory history rather than tool identity alone.</p>
+      <p>On AgentLens-Bench, the composite score separates passing trajectories into Lucky, Solid, and Ideal tiers; decomposes Lucky Passes into five recurring mechanisms; and changes how the eight evaluated model backends are ranked compared with pass rate alone. Across these models, AgentLens classifies between 0.5% and 23.2% of successful trajectories as Lucky, and some models move by as many as five rank positions when ranked by quality score instead of pass rate.</p>
+    </div>
+  </section>
+
+  <section id="method">
+    <h2>How AgentLens works</h2>
+    <div class="prose">
+      <p>AgentLens evaluates a candidate trajectory in four stages: it parses raw logs into labeled states, constructs a task-specific reference graph from passing solutions, scores the candidate against that reference, and returns a structured quality report.</p>
+      <p>Each action is assigned to one of four cognitive phases: <span class="stage e">Exploration</span> <span class="stage i">Implementation</span> <span class="stage v">Verification</span> <span class="stage o">Orchestration</span>, using trajectory history rather than tool identity alone. This resolves common ambiguities such as terminal commands: <code>grep</code> remains exploratory even after an edit, whereas <code>pytest</code> is verification.</p>
+    </div>
+    <figure>
+      <img src="assets/pipeline_overview.jpg" width="1916" height="821" loading="lazy"
+           alt="AgentLens workflow in five panels: trace collection, trace parser and state creation, intent stage labelling, PTA construction and merging, and analysis and visualization.">
+      <figcaption><b>AgentLens workflow.</b> AgentLens starts from raw execution traces and converts them into structured state sequences. Intent-stage labeling assigns each state a process role. These intent-labeled states become the states used for per-trace PTA construction. Passing trajectories for the same task are then merged into a task-level PTA, which represents the known-good solution strategies for that task. New trajectories are scored against this task-level reference to produce quality tiers, divergence points, waste reports, and visual analyses.</figcaption>
+    </figure>
+    <div class="prose">
+      <p>A single reference trajectory cannot represent the diversity of correct strategies: two agents may solve the same task through different but valid sequences. AgentLens instead constructs a Prefix Tree Acceptor from multiple passing trajectories for the same task. Shared prefixes are merged into common nodes, while divergent but successful strategies form branches. Each root-to-terminal path therefore represents one known-good solution.</p>
+    </div>
+    <figure>
+      <img src="assets/pta_construction.png" width="2000" height="775" loading="lazy"
+           alt="Two passing traces share a grep and read utils.py prefix, then diverge; the merged trace keeps the shared prefix and branches at the implementation step.">
+      <figcaption><b>PTA construction.</b> Two individual passing traces sharing an early exploration prefix but diverging at implementation are merged into a single DAG. Shared nodes reflect equivalent actions across agents; branches reflect genuine strategic divergence.</figcaption>
+    </figure>
+    <div class="prose">
+      <p>A candidate is scored against the task PTA with four signals: structural alignment, set coverage, trajectory coherence, and temporal profile similarity. They combine into a 0–100 quality score. Passing trajectories scoring 70 or more are <b>Ideal</b>, 47 to 70 are <b>Solid</b>, and below 47 are <b>Lucky</b>.</p>
+    </div>
+  </section>
+
+  <section id="results">
+    <h2>Results</h2>
+    <h3>Lucky Passes reveal recurring weak-success mechanisms</h3>
+    <div class="prose">
+      <p>The 122 Lucky Passes produce correct patches but receive low process-quality scores. The two largest categories are Brute-Force Convergence, where the agent reaches a correct patch through repeated low-coherence attempts, and Incomplete Implementation, where the agent makes a partial fix that passes because visible tests are insufficient. Lucky trajectories with blind retries waste 11.4 steps per instance, compared with 2.7 in Ideal trajectories.</p>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <caption><b>Lucky Pass taxonomy.</b> C2 and C3 together account for 68.0% of all Lucky Passes.</caption>
+        <thead>
+          <tr><th>Category</th><th class="num">n</th><th class="num">%</th><th>Key signal</th><th>Primary cause</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>C1: Minimal &amp; Unverified</td><td class="num">19</td><td class="num">15.6</td><td>Short + no V stage</td><td>Agent overconfidence</td></tr>
+          <tr><td>C2: Brute-Force Convergence</td><td class="num">42</td><td class="num">34.4</td><td>High waste, low coh.</td><td>Lack of planning</td></tr>
+          <tr><td>C3: Incomplete Implementation</td><td class="num">41</td><td class="num">33.6</td><td>Partial fix, low cov.</td><td>Test-suite gaps</td></tr>
+          <tr><td>C4: Excessive Exploration</td><td class="num">5</td><td class="num">4.1</td><td>Very long, unfocused</td><td>Missing termination</td></tr>
+          <tr><td>C5: Divergent-but-Valid</td><td class="num">15</td><td class="num">12.3</td><td>Alternative approach</td><td>Multiple valid solutions</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Process quality changes how models are ranked</h3>
+    <div class="prose">
+      <p>Quality-score rankings disagree with pass-rate rankings for every model. GPT-4o rises from 8th by pass rate to 3rd by quality score among the tasks it solves. Opus 4.6 shows the opposite pattern: a 77.3% pass rate hides an 18.7% Lucky rate.</p>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <caption><b>Frontier model comparison.</b> Quality-score rankings (QS rank) disagree with pass-rate rankings (PR rank) on all eight models.</caption>
+        <thead>
+          <tr><th>Model</th><th class="num">Pass %</th><th class="num">PR rank</th><th class="num">Quality</th><th class="num">QS rank</th><th class="num">Lucky %</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="model">sonnet-4.5</td><td class="num">86.8</td><td class="num">2</td><td class="num"><b>67.4</b></td><td class="num">1</td><td class="num">1.0</td></tr>
+          <tr><td class="model">opus-4.5</td><td class="num">87.9</td><td class="num">1</td><td class="num">66.2</td><td class="num">2</td><td class="num">0.5</td></tr>
+          <tr><td class="model">gpt-4o</td><td class="num">34.9</td><td class="num">8</td><td class="num">63.4</td><td class="num">3</td><td class="num">4.1</td></tr>
+          <tr><td class="model">gemini-2.5-pro</td><td class="num">42.9</td><td class="num">7</td><td class="num">59.2</td><td class="num">4</td><td class="num">7.6</td></tr>
+          <tr><td class="model">gpt-5.3-codex</td><td class="num">45.9</td><td class="num">6</td><td class="num">58.3</td><td class="num">5</td><td class="num">15.3</td></tr>
+          <tr><td class="model">opus-4.6</td><td class="num">77.3</td><td class="num">3</td><td class="num">56.7</td><td class="num">6</td><td class="num">18.7</td></tr>
+          <tr><td class="model">gpt-5.2-codex</td><td class="num">64.6</td><td class="num">4</td><td class="num">56.1</td><td class="num">7</td><td class="num">19.4</td></tr>
+          <tr><td class="model">gpt-4.1</td><td class="num">59.9</td><td class="num">5</td><td class="num">54.7</td><td class="num">8</td><td class="num lucky-hi">23.2</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="bench">
+    <h2>AgentLens-Bench</h2>
+    <div class="prose">
+      <p>AgentLens-Bench is a process-annotated SWE-agent trajectory dataset built from 47 PTA-eligible SWE-bench Verified tasks. Each trajectory has a 40-column feature vector with quality scores, waste annotations, divergence metadata, and a tier label, and each task has one ground-truth PTA. Because each PTA represents the known-good solution space for a distinct task, the collection provides task-diverse references for trajectory scoring, filtering, and failure analysis.</p>
+    </div>
+    <ul class="facts">
+      <li><b>1,815</b>trajectories</li>
+      <li><b>47</b>tasks, one PTA each</li>
+      <li><b>8</b>model backends</li>
+      <li><b>1,136 / 679</b>pass / fail</li>
+    </ul>
+    <p class="center"><a href="https://github.com/priyamsahoo/agentlens-app/tree/main/agentlens-bench">Browse the dataset on GitHub</a> (CC-BY-4.0)</p>
+  </section>
+
+  <section id="bibtex">
+    <h2>BibTeX</h2>
+    <div class="bib">
+      <pre id="bibtex-text">@inproceedings{sahoo2026agentlens,
+  title     = {AgentLens: Revealing The Lucky Pass Problem in SWE-Agent Evaluation},
+  author    = {Sahoo, Priyam and Mittal, Gaurav and Li, Xiaomin and Ma, Shengjie and Steenhoek, Benjamin and Lin, Pingping and Hu, Yu},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
+  year      = {2026},
+  url       = {https://arxiv.org/abs/2605.12925}
+}</pre>
+      <button class="copy" id="copy-bibtex" type="button">Copy</button>
+    </div>
+  </section>
+
+  <footer>Code released under the MIT License. AgentLens-Bench released under CC-BY-4.0.</footer>
+</main>
+<script>
+(function () {
+  var btn = document.getElementById("copy-bibtex");
+  var pre = document.getElementById("bibtex-text");
+  function selectText() {
+    var r = document.createRange(); r.selectNodeContents(pre);
+    var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+  }
+  btn.addEventListener("click", function () {
+    var done = function () { btn.textContent = "Copied"; setTimeout(function () { btn.textContent = "Copy"; }, 1600); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(pre.textContent).then(done, function () { selectText(); btn.textContent = "Selected, copy it"; });
+    } else { selectText(); btn.textContent = "Selected, copy it"; }
+  });
+})();
+</script>
+</body>
+</html>
