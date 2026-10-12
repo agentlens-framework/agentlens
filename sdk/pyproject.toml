@@ -29,7 +29,6 @@ classifiers = [
 dependencies = [
     "openai>=1.0.0",
     "python-dotenv>=1.0.0",
-    "azure-identity>=1.15.0",
     "tree-sitter==0.21.3",
     "tree-sitter-languages==1.10.2",
 ]

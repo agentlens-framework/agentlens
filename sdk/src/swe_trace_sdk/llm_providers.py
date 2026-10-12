@@ -9,7 +9,7 @@ Environment variable conventions:
   separated list of those entries for ensemble style usage.
 
 Supported providers (strings are case-sensitive here):
-  trapi, ollama, openai, azure, anthropic, codex
+  ollama, openai, azure, anthropic, codex
 
 Examples:
   export DEFAULT_LLM="openai:gpt-4o:0.7"
@@ -27,12 +27,6 @@ from typing import List, Tuple, Union
 
 from dotenv import load_dotenv
 from openai import AzureOpenAI, OpenAI
-from azure.identity import (
-    DefaultAzureCredential,
-    ChainedTokenCredential,
-    AzureCliCredential,
-    get_bearer_token_provider,
-)
 
 # Load environment variables from a .env file if present (idempotent)
 load_dotenv()
@@ -203,7 +197,7 @@ def _get_openai_retry_config():
     """Return kwargs for client retry configuration if supported by SDK.
 
     Defaults to max_retries=1. Override with CLAUDE_PROXY_BACKEND_RETRIES or OPENAI_MAX_RETRIES.
-    Provider gateways (e.g., TRAPI) may still perform internal retries beyond SDK control.
+    Provider gateways may still perform internal retries beyond SDK control.
     """
     retries = int(
         os.getenv(
@@ -222,45 +216,12 @@ def get_client(provider: str):
     Parameters
     ----------
     provider : str
-        One of: trapi, ollama, openai, azure, anthropic, codex
+        One of: ollama, openai, azure, anthropic, codex
     """
     if provider in _CLIENT_CACHE:
         return _CLIENT_CACHE[provider]
 
     provider = provider.strip()
-
-    if provider == "trapi":
-        scope = os.getenv("TRAPI_SCOPE", "api://trapi/.default")
-        credential = get_bearer_token_provider(
-            ChainedTokenCredential(
-                AzureCliCredential(),
-                DefaultAzureCredential(
-                    exclude_cli_credential=True,
-                    # Exclude other credentials we are not interested in.
-                    exclude_environment_credential=True,
-                    exclude_shared_token_cache_credential=True,
-                    exclude_developer_cli_credential=True,
-                    exclude_powershell_credential=True,
-                    exclude_interactive_browser_credential=True,
-                    exclude_visual_studio_code_credentials=True,
-                    managed_identity_client_id=os.environ.get("DEFAULT_IDENTITY_CLIENT_ID"),
-                ),
-            ),
-            scope,
-        )
-
-        api_version = os.getenv("TRAPI_OPENAI_API_VERSION", "2024-10-21")
-        instance = os.getenv("TRAPI_INSTANCE", "redmond/interactive")
-        endpoint = os.getenv("TRAPI_ENDPOINT", f"https://trapi.research.example.com/{instance}")
-
-        client = AzureOpenAI(
-            azure_endpoint=endpoint,
-            azure_ad_token_provider=credential,
-            api_version=api_version,
-            **_get_openai_retry_config(),
-        )
-        _CLIENT_CACHE[provider] = client
-        return client
 
     if provider == "ollama":
         base_url = os.getenv("OLLAMA_URL")
