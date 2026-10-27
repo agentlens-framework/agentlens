@@ -49,7 +49,7 @@
   "name": "AgentLens-Bench",
   "description": "A benchmark dataset of 1,815 fully-annotated coding agent trajectories across 47 SWE-bench tasks and 8 frontier models, with process-level quality annotations. Features include ground-truth Prefix Tree Automata (PTAs) constructed from merged successful trajectories, multi-dimensional quality scoring (coverage, coherence, workflow similarity, stage completeness), five-category waste detection (regression loops, blind retries, redundant reads, unnecessary exploration, cyclic patterns), quality tier classification (Ideal/Solid/Lucky), and divergence-point localization. This is the first coding agent benchmark providing process-level quality annotations rather than binary pass/fail labels.",
   "conformsTo": "http://mlcommons.org/croissant/1.1",
-  "url": "https://github.com/priyamsahoo/agentlens-app",
+  "url": "https://github.com/microsoft/AgentLens",
   "license": "https://spdx.org/licenses/CC-BY-4.0.html",
   "version": "1.0",
   "datePublished": "2026-05-04",
@@ -112,7 +112,7 @@
       "@id": "dataset-summary",
       "name": "dataset_summary.json",
       "description": "Machine-readable dataset summary with configuration parameters, statistics, tier distribution, and curation table.",
-      "contentUrl": "https://raw.githubusercontent.com/priyamsahoo/agentlens-app/main/agentlens-bench/dataset_summary.json",
+      "contentUrl": "https://raw.githubusercontent.com/microsoft/AgentLens/main/agentlens-bench/dataset_summary.json",
       "encodingFormat": "application/json",
       "sc:sha256": "3b2ea7bbd350164ef08ec2380248a7ded8aa12e272531128c2e74aaa313870b0"
     },
@@ -121,7 +121,7 @@
       "@id": "tasks-csv",
       "name": "tasks.csv",
       "description": "Per-task metadata table with 47 rows: trajectory counts, ground-truth PTA size, and processing time.",
-      "contentUrl": "https://raw.githubusercontent.com/priyamsahoo/agentlens-app/main/agentlens-bench/annotations/tasks.csv",
+      "contentUrl": "https://raw.githubusercontent.com/microsoft/AgentLens/main/agentlens-bench/annotations/tasks.csv",
       "encodingFormat": "text/csv",
       "sc:sha256": "374d3ec20b129490a14113213cee410d67cfbefa637943e8bc319e39b92e1e26"
     },
@@ -130,7 +130,7 @@
       "@id": "tasks-parquet",
       "name": "tasks.parquet",
       "description": "Per-task metadata table in Parquet format (same content as tasks.csv).",
-      "contentUrl": "https://raw.githubusercontent.com/priyamsahoo/agentlens-app/main/agentlens-bench/annotations/tasks.parquet",
+      "contentUrl": "https://raw.githubusercontent.com/microsoft/AgentLens/main/agentlens-bench/annotations/tasks.parquet",
       "encodingFormat": "application/x-parquet",
       "sc:sha256": "096aa72c2f89ae44298d419e3d84db49cd0bee6f6a97ea71c04972da32d3c043"
     },
@@ -139,7 +139,7 @@
       "@id": "trajectories-csv",
       "name": "trajectories.csv",
       "description": "Main annotation table with 1,815 rows and 40 columns: quality scores, waste detection, divergence analysis, and per-stage coverage for every trajectory.",
-      "contentUrl": "https://raw.githubusercontent.com/priyamsahoo/agentlens-app/main/agentlens-bench/annotations/trajectories.csv",
+      "contentUrl": "https://raw.githubusercontent.com/microsoft/AgentLens/main/agentlens-bench/annotations/trajectories.csv",
       "encodingFormat": "text/csv",
       "sc:sha256": "6cfddb6a0c5ad82cbf4c96bddd42fb441a6b7bb30490c136687a98b7651c8dfe"
     },
@@ -148,7 +148,7 @@
       "@id": "trajectories-parquet",
       "name": "trajectories.parquet",
       "description": "Main annotation table in Parquet format (same content as trajectories.csv).",
-      "contentUrl": "https://raw.githubusercontent.com/priyamsahoo/agentlens-app/main/agentlens-bench/annotations/trajectories.parquet",
+      "contentUrl": "https://raw.githubusercontent.com/microsoft/AgentLens/main/agentlens-bench/annotations/trajectories.parquet",
       "encodingFormat": "application/x-parquet",
       "sc:sha256": "6709c1117f241c81835dd2850429e8357a2bb61e51bce451fc3ef67c93ec7fbc"
     },
@@ -157,7 +157,7 @@
       "@id": "curation-table",
       "name": "curation_table.json",
       "description": "Quality-guided curation strategies showing how filtering by quality score improves trajectory set composition.",
-      "contentUrl": "https://raw.githubusercontent.com/priyamsahoo/agentlens-app/main/agentlens-bench/annotations/curation_table.json",
+      "contentUrl": "https://raw.githubusercontent.com/microsoft/AgentLens/main/agentlens-bench/annotations/curation_table.json",
       "encodingFormat": "application/json",
       "sc:sha256": "c9c0a34fc8f573e474084ef2d6060d340721783bd2de9db6370324471ab4805c"
     }

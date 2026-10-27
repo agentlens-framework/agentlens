@@ -4,7 +4,7 @@ Code and data for **[AgentLens: Revealing The Lucky Pass Problem in SWE-Agent Ev
 
 Priyam Sahoo, Gaurav Mittal, Xiaomin Li, Shengjie Ma, Benjamin Steenhoek, Pingping Lin, Yu Hu
 
-[[Project Page]](https://priyamsahoo.github.io/agentlens-app/) [[Paper]](https://arxiv.org/abs/2605.12925) [[NeurIPS 2026 Poster]](https://neurips.cc/virtual/2026/loc/sydney/poster/138951)
+[[Project Page]](https://microsoft.github.io/AgentLens/) [[Paper]](https://arxiv.org/abs/2605.12925) [[NeurIPS 2026 Poster]](https://neurips.cc/virtual/2026/loc/sydney/poster/138951)
 
 AgentLens applies state-machine methodology to analyze coding agent behavior. It extends a proven approach from UX testing agents to code-agent/SWE-bench evaluation. Key capabilities include:
 
