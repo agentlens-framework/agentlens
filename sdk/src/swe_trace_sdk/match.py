@@ -943,29 +943,34 @@ def _compute_verdict(
     return "UNCERTAIN"
 
 
+# Fixed tier thresholds on the 0-100 quality score. These are the values
+# used to build AgentLens-Bench (experiments/build_dataset.py).
+IDEAL_MIN_SCORE = 70
+LUCKY_MAX_SCORE = 47
+PARTIAL_FAIL_MIN_SCORE = 40
+
+
 def _compute_quality_tier(
+    score: int,
+    passed: Optional[bool],
     verdict: str,
-    coverage: float,
-    coherence: float,
-    stage_completeness: float,
-    terminal_match: bool,
-    workflow_similarity: float,
 ) -> str:
-    """Classify a trajectory into a quality tier."""
-    is_pass = verdict in ("PASS", "LIKELY PASS")
+    """Classify a trajectory into a quality tier from its quality score.
+
+    Uses the actual outcome when known and falls back to the predicted
+    verdict otherwise. Passing: ideal (>= 70), solid, lucky (< 47).
+    Failing: partial_fail (>= 40), off_track.
+    """
+    is_pass = passed if passed is not None else verdict in ("PASS", "LIKELY PASS")
 
     if is_pass:
-        # Ideal: high coverage + high coherence + strong stage completeness
-        if coverage >= 70 and coherence >= 0.6 and stage_completeness >= 0.75:
+        if score >= IDEAL_MIN_SCORE:
             return "ideal"
-        # Solid: generally good but not top-tier
-        if coverage >= 50 and coherence >= 0.4 and stage_completeness >= 0.5:
-            return "solid"
-        # Lucky: outcome matched but approach was weak
-        return "lucky"
+        if score < LUCKY_MAX_SCORE:
+            return "lucky"
+        return "solid"
 
-    # Failing tiers
-    if coverage >= 40 and stage_completeness >= 0.5:
+    if score >= PARTIAL_FAIL_MIN_SCORE:
         return "partial_fail"
     return "off_track"
 
@@ -1905,15 +1910,6 @@ def quality_assessment(
         bottleneck_coverage=m.bottleneck_coverage,
     )
 
-    tier = _compute_quality_tier(
-        verdict=verdict,
-        coverage=m.coverage_percent,
-        coherence=m.coherence_score,
-        stage_completeness=m.stage_completeness,
-        terminal_match=m.terminal_state_match,
-        workflow_similarity=m.workflow_similarity,
-    )
-
     score = _compute_quality_score(
         coverage=m.coverage_percent,
         coherence=m.coherence_score,
@@ -1922,6 +1918,8 @@ def quality_assessment(
         f1=m.f1_score,
         passed=passed,
     )
+
+    tier = _compute_quality_tier(score=score, passed=passed, verdict=verdict)
 
     is_fail = verdict in ("FAIL", "LIKELY FAIL", "UNCERTAIN")
     failure_reasons = (
@@ -2018,16 +2016,12 @@ def rank_in_cohort(
                 m.stage_completeness, m.terminal_state_match,
                 m.coherence_score,
             )
-            tier = _compute_quality_tier(
-                verdict, m.coverage_percent, m.coherence_score,
-                m.stage_completeness, m.terminal_state_match,
-                m.workflow_similarity,
-            )
             score = _compute_quality_score(
                 m.coverage_percent, m.coherence_score,
                 m.stage_completeness, m.workflow_similarity,
                 m.f1_score,
             )
+            tier = _compute_quality_tier(score=score, passed=None, verdict=verdict)
             report = QualityReport(
                 verdict=verdict, quality_tier=tier, quality_score=score,
             )
