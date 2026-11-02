@@ -34,7 +34,7 @@ dev = [
 ]
 
 [project.urls]
-Repository = "https://github.com/microsoft/AgentLens"
+Repository = "https://github.com/agentlens-framework/agentlens"
 Paper = "https://arxiv.org/abs/2605.12925"
 
 [tool.setuptools.packages.find]
