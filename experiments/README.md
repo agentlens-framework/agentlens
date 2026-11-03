@@ -63,6 +63,7 @@ python experiments/merge_order_study/run_merge_order_study.py <task_dir> \
 | `run_full_experiment.py` | Process all tasks at scale — generate individual PTAs and merge per task. |
 | `compute_correlation_metrics.py` | Quick correlation analysis on existing experiment outputs (may overfit). |
 | `create_visualizations.py` | Generate interactive D3.js PTA graph visualizations. |
+| `plot_quality_distribution.py` | Reproduce the paper's Figure 1 (quality-score tiers of passing trajectories) from the released AgentLens-Bench annotations. Requires `matplotlib`. |
 
 ---
 
