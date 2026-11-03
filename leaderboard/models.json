@@ -1,0 +1,10 @@
+{
+  "sonnet-4.5": {"name": "Claude Sonnet 4.5", "org": "Anthropic", "agent": "OpenHands"},
+  "opus-4.5": {"name": "Claude Opus 4.5", "org": "Anthropic", "agent": "OpenHands"},
+  "opus-4.6": {"name": "Claude Opus 4.6", "org": "Anthropic", "agent": "OpenHands"},
+  "gpt-4o": {"name": "GPT-4o", "org": "OpenAI", "agent": "OpenHands"},
+  "gpt-4.1": {"name": "GPT-4.1", "org": "OpenAI", "agent": "OpenHands"},
+  "gpt-5.2-codex": {"name": "GPT-5.2-Codex", "org": "OpenAI", "agent": "OpenHands"},
+  "gpt-5.3-codex": {"name": "GPT-5.3-Codex", "org": "OpenAI", "agent": "OpenHands"},
+  "gemini-2.5-pro": {"name": "Gemini 2.5 Pro", "org": "Google", "agent": "OpenHands"}
+}

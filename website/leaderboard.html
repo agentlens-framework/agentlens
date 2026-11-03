@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AgentLens Leaderboard</title>
+<meta name="description" content="Process-quality leaderboard for SWE agents on AgentLens-Bench. Models ranked by AgentLens quality score, not pass rate.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap">
+<style>
+/* Layout: same centered column system as the project page, widened for the table; rows expand in place into a three-part detail panel. */
+:root {
+  --bg: #ffffff;
+  --ink: #161b24;
+  --muted: #5a6372;
+  --faint: #8a93a1;
+  --rule: #e4e7ec;
+  --panel: #f7f8fa;
+  --row-hover: #f6f8fb;
+  --accent: #2c5a9a;
+  --code-bg: #f5f7fa;
+  --ideal: #3aa466;
+  --solid: #e5b23c;
+  --lucky: #d9534a;
+  --ideal-band: #e8f5ec;
+  --solid-band: #fdf5e2;
+  --lucky-band: #fbe9e8;
+  --bar: #6f9fd8;
+  --up: #2e8a57;
+  --down: #c2413a;
+
+  --font-display: "Newsreader", "Iowan Old Style", Georgia, serif;
+  --font-body: "IBM Plex Sans", -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --text: 1.0625rem;
+  --small: 0.9rem;
+  --tiny: 0.8rem;
+  --h2: 1.6rem;
+  --h1: clamp(2rem, 4.6vw, 2.75rem);
+  --col: 780px;
+  --wide: 1040px;
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+html { background: var(--bg); }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 400 var(--text)/1.7 var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+.page {
+  max-width: var(--wide);
+  margin: 0 auto;
+  padding-inline: 20px;
+  padding-block: 56px 72px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 56px;
+}
+.narrow { width: 100%; max-width: var(--col); justify-self: center; }
+a { color: var(--accent); text-underline-offset: 2px; }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+
+/* Header */
+header { text-align: center; display: grid; gap: 14px; justify-items: center; }
+.crumb { font: 500 var(--tiny)/1 var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); text-decoration: none; }
+.crumb:hover { color: var(--accent); }
+h1 { margin: 0; font: 600 var(--h1)/1.15 var(--font-display); letter-spacing: -0.01em; text-wrap: balance; }
+.lede { margin: 0; max-width: 60ch; color: var(--muted); text-wrap: balance; }
+.pill { display: inline-block; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--rule); color: var(--muted); font: 500 var(--tiny)/1.4 var(--font-body); }
+
+/* Table */
+.board { display: grid; gap: 14px; min-width: 0; }
+.table-wrap { overflow-x: auto; min-width: 0; }
+table { border-collapse: collapse; width: 100%; font-size: var(--small); font-variant-numeric: tabular-nums; }
+th, td { padding: 12px 10px; border-bottom: 1px solid var(--rule); white-space: nowrap; text-align: center; vertical-align: middle; }
+thead th { border-top: 1.5px solid var(--ink); border-bottom: 1px solid var(--ink); font-weight: 600; }
+tbody tr.row:last-of-type td, tbody tr.detail:last-child td { border-bottom: 1.5px solid var(--ink); }
+tbody tr.row { cursor: pointer; }
+tbody tr.row:hover, tbody tr.row.open { background: var(--row-hover); }
+th.left, td.left { text-align: left; }
+th button.sort { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; font-weight: 600; }
+th button.sort::after { content: "↕"; color: var(--rule); font-size: 0.85em; }
+th[aria-sort="descending"] button.sort::after { content: "↓"; color: var(--ink); }
+th[aria-sort="ascending"] button.sort::after { content: "↑"; color: var(--ink); }
+th button.sort:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+td.chev { width: 34px; padding-inline: 6px 0; }
+button.expand {
+  all: unset; cursor: pointer; display: inline-grid; place-items: center;
+  width: 24px; height: 24px; border-radius: 999px; box-sizing: border-box;
+  border: 1px solid var(--rule); color: var(--muted); background: var(--bg);
+  transition: transform .15s, color .15s, border-color .15s;
+}
+button.expand svg { width: 12px; height: 12px; display: block; }
+tr.row:hover button.expand { color: var(--ink); border-color: var(--muted); }
+button.expand:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+tr.open button.expand { transform: rotate(90deg); color: var(--ink); border-color: var(--ink); }
+td.rank { font: 600 1rem/1 var(--font-display); color: var(--muted); width: 2.2em; }
+td small { display: block; font: 400 var(--tiny)/1.35 var(--font-body); color: var(--muted); margin-top: 3px; }
+tr.row:nth-of-type(-n+3) td.rank { color: var(--ink); }
+.model-name { font-weight: 600; }
+.model-meta { display: block; color: var(--muted); font-size: var(--tiny); line-height: 1.4; }
+.badge { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 4px; background: var(--code-bg); color: var(--muted); font: 500 0.72rem/1.6 var(--font-body); vertical-align: 1px; }
+td.quality { font: 600 1.05rem/1 var(--font-display); }
+td.quality small .ci { color: var(--faint); }
+
+.mix { display: inline-flex; width: 132px; height: 9px; border-radius: 999px; overflow: hidden; background: var(--rule); vertical-align: middle; }
+.mix span { display: block; height: 100%; }
+.i { background: var(--ideal); }
+.s { background: var(--solid); }
+.l { background: var(--lucky); }
+
+.delta { font-weight: 600; }
+.delta.up { color: var(--up); }
+.delta.down { color: var(--down); }
+.delta.same { color: var(--muted); font-weight: 400; }
+
+/* Detail panel */
+tr.detail td { padding: 0; background: var(--panel); white-space: normal; text-align: left; }
+.panel { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr) minmax(0, 1fr); gap: 32px; padding: 22px 26px 24px 54px; }
+.panel h4 { margin: 0 0 10px; font: 600 var(--tiny)/1.3 var(--font-body); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.panel svg { display: block; width: 100%; height: auto; overflow: visible; }
+.panel svg text { font: 400 10px var(--font-body); fill: var(--muted); }
+.tiers { display: grid; gap: 12px; }
+.mix.big { width: 100%; height: 14px; }
+.kv { display: grid; grid-template-columns: auto 1fr auto; gap: 4px 10px; align-items: center; font-size: var(--small); font-variant-numeric: tabular-nums; }
+.kv .sw { width: 10px; height: 10px; border-radius: 2px; }
+.kv .num { text-align: right; }
+.kv .pf { background: var(--faint); }
+.kv .ot { background: var(--rule); }
+.kv .pct { color: var(--muted); font-size: var(--tiny); }
+.kv .sep { grid-column: 1 / -1; height: 1px; background: var(--rule); margin: 4px 0; }
+.waste { display: grid; grid-template-columns: max-content minmax(0, 1fr) 2.6em; gap: 7px 10px; align-items: center; font-size: var(--tiny); font-variant-numeric: tabular-nums; }
+.waste .track { height: 8px; background: var(--rule); border-radius: 999px; overflow: hidden; }
+.waste .fill { height: 100%; background: var(--muted); border-radius: 999px; }
+.waste .v { text-align: right; color: var(--ink); }
+.panel-foot { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; font-size: var(--tiny); color: var(--muted); border-top: 1px solid var(--rule); padding-top: 14px; }
+.waste-na { margin: 0; font-size: var(--tiny); color: var(--muted); }
+
+.legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 22px; color: var(--muted); font-size: var(--tiny); }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+.hint { text-align: center; color: var(--faint); font-size: var(--tiny); margin: 0; }
+
+/* Sections below the board */
+section { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; min-width: 0; }
+h2 { margin: 0; text-align: center; font: 600 var(--h2)/1.2 var(--font-display); text-wrap: balance; }
+p { margin: 0; }
+dd { text-align: justify; hyphens: auto; -webkit-hyphens: auto; }
+dl { margin: 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 10px 20px; font-size: var(--small); }
+dt { font-weight: 600; }
+dd { margin: 0; color: var(--muted); }
+ol.steps { margin: 0; padding: 0; list-style: none; counter-reset: step; display: grid; gap: 14px; }
+ol.steps li { counter-increment: step; display: grid; grid-template-columns: 2em minmax(0, 1fr); gap: 12px; text-align: justify; hyphens: auto; -webkit-hyphens: auto; }
+ol.steps li::before { content: counter(step); font: 600 1.15rem/1.5 var(--font-display); color: var(--muted); text-align: center; }
+code { font: 400 0.88em/1 var(--font-mono); background: var(--code-bg); padding: 2px 5px; border-radius: 4px; hyphens: none; -webkit-hyphens: none; overflow-wrap: anywhere; }
+ol.steps li > div { display: grid; gap: 10px; min-width: 0; }
+pre { margin: 0; padding: 12px 14px; overflow-x: auto; background: var(--code-bg); border: 1px solid var(--rule); border-radius: 6px; font: 400 0.8rem/1.6 var(--font-mono); text-align: left; hyphens: none; }
+pre code { background: none; padding: 0; font: inherit; }
+.center { text-align: center; }
+footer { color: var(--muted); font-size: var(--tiny); border-top: 1px solid var(--rule); padding-top: 20px; text-align: center; }
+
+@media (max-width: 760px) {
+  .panel { grid-template-columns: minmax(0, 1fr); gap: 24px; padding: 18px 16px 20px; }
+}
+@media (max-width: 560px) {
+  .page { padding-inline: 16px; padding-block: 40px 56px; gap: 44px; }
+  dl { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  dd { margin-bottom: 10px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<main class="page" lang="en">
+
+  <header>
+    <a class="crumb" href="./">AgentLens · NeurIPS 2026</a>
+    <h1>AgentLens Leaderboard</h1>
+    <p class="lede">Coding agents on AgentLens-Bench, ranked by how well they solve tasks rather than how often. Quality is the mean AgentLens score of each model's passing trajectories.</p>
+  </header>
+
+  <div class="board">
+    <div class="table-wrap">
+      <table id="board">
+        <thead>
+          <tr>
+            <th scope="col" aria-label="Details"></th>
+            <th scope="col">#</th>
+            <th scope="col" class="left">Model</th>
+            <th scope="col" data-key="quality" aria-sort="descending"><button type="button" class="sort">Quality</button></th>
+            <th scope="col">Tier mix</th>
+            <th scope="col" data-key="pass_rate"><button type="button" class="sort">Pass %</button></th>
+            <th scope="col" data-key="delta"><button type="button" class="sort">vs pass rate</button></th>
+            <th scope="col" data-key="lucky"><button type="button" class="sort">Lucky %</button></th>
+            <th scope="col" data-key="trajectories"><button type="button" class="sort">Runs</button></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="legend" aria-hidden="true">
+      <span><i class="i"></i>Ideal (score ≥ 70)</span>
+      <span><i class="s"></i>Solid</span>
+      <span><i class="l"></i>Lucky (score &lt; 47)</span>
+    </div>
+    <p class="hint">Click a row for its score distribution, tiers, and wasted steps.</p>
+  </div>
+
+  <section class="narrow" id="columns">
+    <h2>Reading the table</h2>
+    <dl>
+      <dt>Quality</dt><dd>Mean AgentLens quality score (0–100) over the model's passing trajectories, with a 95% confidence interval.</dd>
+      <dt>Tier mix</dt><dd>Share of passing trajectories that are Ideal, Solid, or Lucky. A Lucky Pass reaches a correct patch through a weak process.</dd>
+      <dt>vs pass rate</dt><dd>How many places the model moves when ranked by quality instead of pass rate.</dd>
+    </dl>
+  </section>
+
+  <section class="narrow" id="protocol">
+    <h2>How scores are computed</h2>
+    <ol class="steps">
+      <li>For each task, AgentLens merges five passing runs of that task into a reference PTA, the space of known-good solutions. Every run is scored against a reference that does not contain it.</li>
+      <li>A model's runs are scored only against runs from other models. Including its own runs would raise its score by about three points per same-model donor, an advantage a new agent never gets.</li>
+      <li>The five donors are drawn at random. Every run is scored under five fixed draws, and the table averages them, because a single draw can shift scores by a few points.</li>
+      <li><span>The donor lists for every draw, task, and model are <a id="refs-link" href="#">published</a>, and scoring needs no LLM calls, so every number on this page can be reproduced exactly.</span></li>
+    </ol>
+    <p class="center" id="protocol-note"></p>
+  </section>
+
+  <section class="narrow" id="submit">
+    <h2>Submit your agent</h2>
+    <p class="center">Run the benchmark with your own model and harness, score the runs locally, and send us the results.</p>
+    <ol class="steps">
+      <li><div><span>Download the repository and install the scorer. It contains the 47 tasks (<code>agentlens-bench/annotations/tasks.csv</code>), the reference runs, and the scoring code. Scoring runs on CPU and needs no API keys.</span>
+<pre><code>git clone https://github.com/agentlens-framework/agentlens
+cd agentlens &amp;&amp; pip install ./sdk</code></pre></div></li>
+      <li><span>Run your agent on each of the 47 SWE-bench Verified tasks, five times per task, and check every patch with the official SWE-bench harness. Any harness works if it saves OpenHands or ATIF trajectories.</span></li>
+      <li><div><span>List your runs in a CSV file, one row per run: the task, the path to its trajectory file, and whether the harness marked it resolved.</span>
+<pre><code>task_id,trajectory,resolved
+django__django-11066,runs/django-11066/run1.json,true</code></pre></div></li>
+      <li><div><span>Score the runs. This uses the same five reference draws as every model on this page and prints your quality score, pass rate, and Lucky rate.</span>
+<pre><code>python leaderboard/score_submission.py runs.csv --format openhands \
+  --name "My Agent" --model "my-model" --agent "MyHarness" \
+  --trajectories-url https://example.org/my-trajectories \
+  --out leaderboard/submissions/my-agent</code></pre></div></li>
+      <li><span>Open a pull request that adds your <code>leaderboard/submissions/my-agent</code> folder. We re-score your trajectories from the link you provide and add your agent to this page.</span></li>
+    </ol>
+    <p class="center"><a id="guide-link" href="#">Full submission guide</a></p>
+  </section>
+
+  <footer><a href="./">Project page</a> · <a href="https://arxiv.org/abs/2605.12925">Paper</a> · <a href="https://github.com/agentlens-framework/agentlens">Code</a></footer>
+</main>
+
+<script id="leaderboard-data" type="application/json">{"benchmark":"AgentLens-Bench (47 SWE-bench Verified tasks)","thresholds":{"ideal_min":70,"lucky_max":47,"partial_fail_min":40},"protocol":{"version":"v1","k":5,"seeds":[42,1,2,3,4],"references_url":"https://github.com/agentlens-framework/agentlens/blob/main/leaderboard/references/v1.json"},"repo_url":"https://github.com/agentlens-framework/agentlens","hist_bin":5,"entries":[{"id":"sonnet-4.5","model":"Claude Sonnet 4.5","org":"Anthropic","agent":"OpenHands","source":"baseline","date":"","trajectories_url":"","trajectories":227,"tasks":47,"pass_rate":86.8,"quality":65.4,"ci95":0.5,"draw_sd":0.3,"draws":5,"ideal":26.8,"lucky":1.2,"fallback_runs":3,"waste":{"regression_loops":24.1,"blind_retries":3.9,"redundant_steps":3.0,"unnecessary_exploration":0.3,"cyclic_patterns":2.8},"counts":{"passing":197,"failing":30,"ideal":53,"lucky":2,"partial_fail":29,"solid":142,"off_track":1},"hist":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.2,2.6,4.0,18.0,49.6,68.8,52.0,0.8,0.0,0.0,0.0,0.0],"solid":72.0,"quality_rank":1,"pass_rank":2},{"id":"gpt-4o","model":"GPT-4o","org":"OpenAI","agent":"OpenHands","source":"baseline","date":"","trajectories_url":"","trajectories":209,"tasks":46,"pass_rate":34.9,"quality":63.7,"ci95":1.5,"draw_sd":2.4,"draws":5,"ideal":28.5,"lucky":3.3,"fallback_runs":0,"waste":{"regression_loops":2.4,"blind_retries":1.9,"redundant_steps":1.5,"unnecessary_exploration":0.0,"cyclic_patterns":1.9},"counts":{"passing":73,"failing":136,"ideal":21,"lucky":2,"partial_fail":107,"solid":50,"off_track":29},"hist":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.4,1.6,2.2,6.8,12.4,14.4,14.4,13.0,5.2,2.4,0.2,0.0,0.0],"solid":68.2,"quality_rank":2,"pass_rank":8},{"id":"opus-4.5","model":"Claude Opus 4.5","org":"Anthropic","agent":"OpenHands","source":"baseline","date":"","trajectories_url":"","trajectories":223,"tasks":47,"pass_rate":87.9,"quality":63.7,"ci95":0.6,"draw_sd":0.2,"draws":5,"ideal":19.0,"lucky":0.6,"fallback_runs":4,"waste":{"regression_loops":4.5,"blind_retries":1.1,"redundant_steps":2.0,"unnecessary_exploration":0.1,"cyclic_patterns":2.0},"counts":{"passing":196,"failing":27,"ideal":37,"lucky":1,"partial_fail":24,"solid":158,"off_track":3},"hist":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.2,4.2,11.6,32.0,52.4,58.4,32.4,4.6,0.2,0.0,0.0,0.0],"solid":80.4,"quality_rank":2,"pass_rank":1},{"id":"gemini-2.5-pro","model":"Gemini 2.5 Pro","org":"Google","agent":"OpenHands","source":"baseline","date":"","trajectories_url":"","trajectories":245,"tasks":47,"pass_rate":42.9,"quality":58.4,"ci95":1.4,"draw_sd":1.2,"draws":5,"ideal":12.8,"lucky":12.4,"fallback_runs":0,"waste":{"regression_loops":1.9,"blind_retries":1.5,"redundant_steps":0.5,"unnecessary_exploration":0.1,"cyclic_patterns":1.6},"counts":{"passing":105,"failing":140,"ideal":13,"lucky":13,"partial_fail":69,"solid":79,"off_track":71},"hist":[0.0,0.0,0.0,0.0,0.0,0.0,1.2,1.4,6.0,10.0,16.4,18.8,24.2,13.6,8.8,4.4,0.2,0.0,0.0,0.0],"solid":74.8,"quality_rank":4,"pass_rank":7},{"id":"gpt-5.3-codex","model":"GPT-5.3-Codex","org":"OpenAI","agent":"OpenHands","source":"baseline","date":"","trajectories_url":"","trajectories":242,"tasks":47,"pass_rate":45.9,"quality":55.9,"ci95":1.4,"draw_sd":1.7,"draws":5,"ideal":7.2,"lucky":16.4,"fallback_runs":0,"waste":{"regression_loops":0.9,"blind_retries":0.4,"redundant_steps":0.0,"unnecessary_exploration":0.0,"cyclic_patterns":0.2},"counts":{"passing":111,"failing":131,"ideal":8,"lucky":18,"partial_fail":48,"solid":85,"off_track":83},"hist":[0.0,0.0,0.0,0.0,0.0,0.0,0.4,5.2,7.6,15.0,21.4,19.8,22.8,10.8,4.0,3.2,0.6,0.2,0.0,0.0],"solid":76.4,"quality_rank":5,"pass_rank":6},{"id":"opus-4.6","model":"Claude Opus 4.6","org":"Anthropic","agent":"OpenHands","source":"baseline","date":"","trajectories_url":"","trajectories":242,"tasks":47,"pass_rate":77.3,"quality":55.2,"ci95":1.1,"draw_sd":1.2,"draws":5,"ideal":8.3,"lucky":17.4,"fallback_runs":0,"waste":{"regression_loops":0.5,"blind_retries":0.2,"redundant_steps":0.1,"unnecessary_exploration":0.0,"cyclic_patterns":0.3},"counts":{"passing":187,"failing":55,"ideal":16,"lucky":33,"partial_fail":36,"solid":138,"off_track":19},"hist":[0.0,0.0,0.0,0.0,0.0,0.2,0.6,8.2,18.4,28.4,32.2,42.0,27.2,14.2,10.0,4.4,1.2,0.0,0.0,0.0],"solid":74.3,"quality_rank":6,"pass_rank":3},{"id":"gpt-5.2-codex","model":"GPT-5.2-Codex","org":"OpenAI","agent":"OpenHands","source":"baseline","date":"","trajectories_url":"","trajectories":240,"tasks":47,"pass_rate":64.6,"quality":54.4,"ci95":1.0,"draw_sd":1.2,"draws":5,"ideal":2.3,"lucky":16.9,"fallback_runs":0,"waste":{"regression_loops":1.3,"blind_retries":1.9,"redundant_steps":1.8,"unnecessary_exploration":0.0,"cyclic_patterns":2.1},"counts":{"passing":155,"failing":85,"ideal":4,"lucky":26,"partial_fail":39,"solid":125,"off_track":46},"hist":[0.0,0.0,0.0,0.0,0.0,0.6,1.2,4.8,11.0,26.0,33.0,33.0,29.0,12.8,2.2,0.8,0.4,0.2,0.0,0.0],"solid":80.8,"quality_rank":7,"pass_rank":4},{"id":"gpt-4.1","model":"GPT-4.1","org":"OpenAI","agent":"OpenHands","source":"baseline","date":"","trajectories_url":"","trajectories":187,"tasks":46,"pass_rate":59.9,"quality":52.8,"ci95":1.2,"draw_sd":1.4,"draws":5,"ideal":2.0,"lucky":20.7,"fallback_runs":0,"waste":{"regression_loops":3.7,"blind_retries":11.3,"redundant_steps":6.2,"unnecessary_exploration":0.4,"cyclic_patterns":0.9},"counts":{"passing":112,"failing":75,"ideal":2,"lucky":23,"partial_fail":22,"solid":87,"off_track":53},"hist":[0.0,0.0,0.0,0.0,0.6,0.6,1.4,2.2,10.0,22.8,29.4,22.4,15.4,5.0,1.8,0.4,0.0,0.0,0.0,0.0],"solid":77.3,"quality_rank":8,"pass_rank":5}]}</script>
+<script>
+(function () {
+  var data = JSON.parse(document.getElementById("leaderboard-data").textContent);
+  var T = data.thresholds, BIN = data.hist_bin;
+  var tbody = document.querySelector("#board tbody");
+  var state = { key: "quality", dir: -1, open: {} };
+  document.getElementById("refs-link").href = data.protocol.references_url;
+  document.getElementById("guide-link").href = data.repo_url + "/blob/main/leaderboard/README.md";
+  document.getElementById("protocol-note").textContent = "k = " + data.protocol.k + " · draws seeded " + data.protocol.seeds.join(", ") + ".";
+
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function f1(x) { return x.toFixed(1); }
+
+  function histogram(e) {
+    var W = 300, H = 120, L = 26, R = 6, Tp = 6, B = 22, w = W - L - R, h = H - Tp - B;
+    var max = Math.max.apply(null, e.hist) || 1, step = max <= 10 ? 2 : max <= 25 ? 5 : max <= 60 ? 10 : 20;
+    var top = Math.ceil(max / step) * step, x = function (v) { return L + v / 100 * w; }, y = function (c) { return Tp + h - c / top * h; };
+    var s = '<svg viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="Histogram of quality scores for ' + e.counts.passing + ' passing trajectories">';
+    s += '<rect x="' + x(0) + '" y="' + Tp + '" width="' + (x(T.lucky_max) - x(0)) + '" height="' + h + '" fill="var(--lucky-band)"/>';
+    s += '<rect x="' + x(T.lucky_max) + '" y="' + Tp + '" width="' + (x(T.ideal_min) - x(T.lucky_max)) + '" height="' + h + '" fill="var(--solid-band)"/>';
+    s += '<rect x="' + x(T.ideal_min) + '" y="' + Tp + '" width="' + (x(100) - x(T.ideal_min)) + '" height="' + h + '" fill="var(--ideal-band)"/>';
+    for (var g = 0; g <= top; g += step) {
+      s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y(g) + '" y2="' + y(g) + '" stroke="var(--rule)" stroke-width="0.6"/>';
+      s += '<text x="' + (L - 5) + '" y="' + (y(g) + 3) + '" text-anchor="end">' + g + "</text>";
+    }
+    e.hist.forEach(function (c, i) {
+      if (!c) return;
+      var x0 = x(i * BIN) + 0.8, bw = x(BIN) - x(0) - 1.6;
+      s += '<rect x="' + x0 + '" y="' + y(c) + '" width="' + bw + '" height="' + (y(0) - y(c)) + '" fill="var(--bar)"><title>' + (i * BIN) + "–" + (i * BIN + BIN) + ": " + (Math.round(c * 10) / 10) + "</title></rect>";
+    });
+    [T.lucky_max, T.ideal_min].forEach(function (t, k) {
+      s += '<line x1="' + x(t) + '" x2="' + x(t) + '" y1="' + Tp + '" y2="' + (Tp + h) + '" stroke="' + (k ? "var(--ideal)" : "var(--lucky)") + '" stroke-dasharray="3 2" stroke-width="1"/>';
+    });
+    s += '<line x1="' + x(e.quality) + '" x2="' + x(e.quality) + '" y1="' + (Tp - 2) + '" y2="' + (Tp + h) + '" stroke="var(--ink)" stroke-width="1.2"/>';
+    s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + (Tp + h) + '" y2="' + (Tp + h) + '" stroke="var(--muted)" stroke-width="0.8"/>';
+    [0, 25, 50, 75, 100].forEach(function (v) { s += '<text x="' + x(v) + '" y="' + (H - 8) + '" text-anchor="middle">' + v + "</text>"; });
+    return s + "</svg>";
+  }
+
+  function panel(e) {
+    var c = e.counts, wmax = e.waste ? Math.max.apply(null, Object.values(e.waste)) || 1 : 1;
+    var wl = { regression_loops: "Regression loops", blind_retries: "Blind retries", redundant_steps: "Redundant steps", unnecessary_exploration: "Extra exploration", cyclic_patterns: "Cycles" };
+    var kv = function (cls, label, n, d) { return '<span class="sw ' + cls + '"></span><span>' + label + '</span><span class="num">' + n + ' <span class="pct">' + (d ? f1(100 * n / d) + "%" : "") + "</span></span>"; };
+    var waste = e.waste ? '<div class="waste">' + Object.keys(wl).map(function (k) {
+      return "<span>" + wl[k] + '</span><span class="track"><span class="fill" style="display:block;width:' + (100 * e.waste[k] / wmax) + '%"></span></span><span class="v">' + f1(e.waste[k]) + "</span>";
+    }).join("") + "</div>" : '<p class="waste-na">Waste breakdown is computed for the baseline runs in AgentLens-Bench.</p>';
+    var cmp = e.tasks + " tasks · " + e.trajectories + " runs · spread across draws ±" + f1(e.draw_sd) +
+      (e.fallback_runs ? " · " + e.fallback_runs + " runs use the fallback reference" : "");
+    var src = e.source === "submission"
+      ? "Submitted " + esc(e.date) + (e.trajectories_url ? ' · <a href="' + esc(e.trajectories_url) + '">trajectories</a>' : "")
+      : "Solid line: mean quality · dashed: tier thresholds";
+    return '<div class="panel">' +
+      "<div><h4>Quality of passing runs</h4>" + histogram(e) + "</div>" +
+      '<div class="tiers"><h4>Tiers</h4><span class="mix big"><span class="i" style="width:' + e.ideal + '%"></span><span class="s" style="width:' + e.solid + '%"></span><span class="l" style="width:' + e.lucky + '%"></span></span>' +
+        '<div class="kv">' + kv("i", "Ideal", c.ideal, c.passing) + kv("s", "Solid", c.solid, c.passing) + kv("l", "Lucky", c.lucky, c.passing) +
+        '<span class="sep"></span>' + kv("pf", "Partial-fail", c.partial_fail, c.failing) + kv("ot", "Off-track", c.off_track, c.failing) + "</div></div>" +
+      "<div><h4>Wasted steps per passing run</h4>" + waste + "</div>" +
+      '<div class="panel-foot"><span>' + cmp + "</span><span>" + src + "</span></div>" +
+      "</div>";
+  }
+
+  function row(e) {
+    var open = !!state.open[e.id];
+    var cls = e.delta > 0 ? "up" : e.delta < 0 ? "down" : "same";
+    var sign = e.delta > 0 ? "↑" + e.delta : e.delta < 0 ? "↓" + (-e.delta) : "–";
+    var mixLabel = "Ideal " + e.ideal + "%, Solid " + e.solid + "%, Lucky " + e.lucky + "%";
+    var qSub = '<span class="ci">±' + f1(e.ci95) + "</span>";
+    return '<tr class="row' + (open ? " open" : "") + '" data-id="' + esc(e.id) + '">' +
+      '<td class="chev"><button type="button" class="expand" aria-expanded="' + open + '" aria-label="Details for ' + esc(e.model) + '"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 2.5 8 6l-3.5 3.5"/></svg></button></td>' +
+      '<td class="rank">' + e.quality_rank + "</td>" +
+      '<td class="left"><span class="model-name">' + esc(e.model) + "</span>" + (e.source === "submission" ? '<span class="badge" title="Submitted by its authors and re-scored by us">submitted</span>' : "") +
+        '<span class="model-meta">' + [e.org, e.agent].filter(Boolean).map(esc).join(" · ") + "</span></td>" +
+      '<td class="quality">' + f1(e.quality) + "<small>" + qSub + "</small></td>" +
+      '<td><span class="mix" role="img" aria-label="' + mixLabel + '" title="' + mixLabel + '"><span class="i" style="width:' + e.ideal + '%"></span><span class="s" style="width:' + e.solid + '%"></span><span class="l" style="width:' + e.lucky + '%"></span></span></td>' +
+      "<td>" + f1(e.pass_rate) + "</td>" +
+      '<td class="delta ' + cls + '">' + sign + "<small>pass-rate #" + e.pass_rank + "</small></td>" +
+      "<td>" + f1(e.lucky) + "</td>" +
+      "<td>" + e.trajectories + "</td></tr>" +
+      (open ? '<tr class="detail"><td colspan="9">' + panel(e) + "</td></tr>" : "");
+  }
+
+  function render() {
+    var rows = data.entries.map(function (e) { e.delta = e.pass_rank - e.quality_rank; return e; });
+    rows.sort(function (a, b) { return (a[state.key] - b[state.key]) * state.dir || a.quality_rank - b.quality_rank; });
+    tbody.innerHTML = rows.map(row).join("");
+  }
+
+  tbody.addEventListener("click", function (ev) {
+    if (ev.target.closest("a")) return;
+    var tr = ev.target.closest("tr.row");
+    if (!tr) return;
+    var id = tr.getAttribute("data-id");
+    state.open[id] = !state.open[id];
+    render();
+    var btn = tbody.querySelector('tr.row[data-id="' + id + '"] button.expand');
+    if (btn && ev.target.closest("button.expand")) btn.focus();
+  });
+
+  document.querySelectorAll("#board th[data-key] button").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var th = btn.parentElement, key = th.getAttribute("data-key");
+      state.dir = state.key === key ? -state.dir : (key === "lucky" ? 1 : -1);
+      state.key = key;
+      document.querySelectorAll("#board th[data-key]").forEach(function (h) { h.removeAttribute("aria-sort"); });
+      th.setAttribute("aria-sort", state.dir < 0 ? "descending" : "ascending");
+      render();
+    });
+  });
+
+  state.open[data.entries[0].id] = true;
+  render();
+})();
+</script>
+</body>
+</html>
