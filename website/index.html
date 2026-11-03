@@ -88,6 +88,8 @@ h1 .name { display: block; font-size: 1.25em; letter-spacing: -0.02em; margin-bo
   transition: background .15s, color .15s;
 }
 .links a:hover { background: var(--bg); color: var(--ink); }
+.links a.featured { background: var(--accent); border-color: var(--accent); }
+.links a.featured:hover { background: var(--bg); color: var(--accent); }
 
 /* Sections */
 section { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; min-width: 0; }
@@ -184,9 +186,9 @@ footer { color: var(--muted); font-size: var(--tiny); border-top: 1px solid var(
       <a href="https://arxiv.org/abs/2605.12925">Paper</a>
       <a href="https://github.com/agentlens-framework/agentlens">Code</a>
       <a href="https://github.com/agentlens-framework/agentlens/tree/main/agentlens-bench">Dataset</a>
-      <a href="leaderboard.html">Leaderboard</a>
       <a href="https://neurips.cc/virtual/2026/loc/sydney/poster/138951">Poster</a>
       <a href="#bibtex">BibTeX</a>
+      <a class="featured" href="leaderboard.html">Leaderboard →</a>
     </nav>
   </header>
 
