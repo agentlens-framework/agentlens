@@ -47,7 +47,7 @@
   },
   "@type": "sc:Dataset",
   "name": "AgentLens-Bench",
-  "description": "A benchmark dataset of 1,815 fully-annotated coding agent trajectories across 47 SWE-bench tasks and 8 frontier models, with process-level quality annotations. Features include ground-truth Prefix Tree Automata (PTAs) constructed from merged successful trajectories, multi-dimensional quality scoring (coverage, coherence, workflow similarity, stage completeness), five-category waste detection (regression loops, blind retries, redundant reads, unnecessary exploration, cyclic patterns), quality tier classification (Ideal/Solid/Lucky), and divergence-point localization. This is the first coding agent benchmark providing process-level quality annotations rather than binary pass/fail labels.",
+  "description": "A benchmark dataset of 1,815 fully-annotated coding agent trajectories across 47 SWE-bench Verified tasks and 8 model backends, with process-level quality annotations. The trajectories are model-generated execution traces over human-authored open-source repositories. Features include ground-truth Prefix Tree Acceptors (PTAs) constructed from merged successful trajectories, multi-dimensional quality scoring (coverage, coherence, workflow similarity, stage completeness), five-category waste detection (regression loops, blind retries, redundant steps, unnecessary exploration, cyclic patterns), quality tier classification (Ideal/Solid/Lucky), and divergence-point localization. This is the first coding agent benchmark providing process-level quality annotations rather than binary pass/fail labels.",
   "conformsTo": "http://mlcommons.org/croissant/1.1",
   "url": "https://github.com/agentlens-framework/agentlens",
   "license": "https://spdx.org/licenses/CC-BY-4.0.html",
@@ -72,11 +72,11 @@
     "SWE-bench",
     "process annotations",
     "quality assessment",
-    "prefix tree automata",
+    "prefix tree acceptors",
     "waste detection",
     "training data curation"
   ],
-  "rai:dataLimitations": "The dataset covers 47 SWE-bench tasks filtered to those with at least 5 passing trajectories out of an initial 60 tasks. It includes trajectories from 8 specific frontier LLM models (Claude Sonnet 4.5, Opus 4.5, Opus 4.6; GPT-4o, GPT-4.1, GPT-5.2-codex, GPT-5.3-codex; Gemini 2.5 Pro) evaluated via an IDE-based agent paradigm only. Results may not generalize to other agent architectures (e.g., terminal-only agents, multi-agent systems), other programming languages (SWE-bench is Python-heavy), or other task domains beyond bug-fixing in open-source repositories. Ground-truth PTAs are constructed from k=5 seed trajectories, which may not capture all valid solution strategies. The dataset should not be used as a definitive quality ranking of the included models, as evaluation conditions may vary.",
+  "rai:dataLimitations": "The dataset covers 47 SWE-bench tasks filtered to those with at least 5 passing trajectories out of an initial 60 tasks. It includes trajectories from 8 specific frontier LLM models (Claude Sonnet 4.5, Opus 4.5, Opus 4.6; GPT-4o, GPT-4.1, GPT-5.2-codex, GPT-5.3-codex; Gemini 2.5 Pro) run with the OpenHands agent scaffold only. Results may not generalize to other agent scaffolds (e.g., terminal-only agents, multi-agent systems), other programming languages (SWE-bench is Python-heavy), or other task domains beyond bug-fixing in open-source repositories. Quality annotations are computed against task-level PTAs merged from five passing trajectories per task, which may not capture all valid solution strategies. The dataset should not be used as a definitive quality ranking of the included models, as evaluation conditions may vary.",
   "rai:dataBiases": "Selection bias: tasks are drawn from SWE-bench, which overrepresents well-maintained Python open-source projects (Django, scikit-learn, matplotlib, etc.) and may not reflect the distribution of real-world software engineering tasks. Model selection bias: only frontier models available at the time of collection (early 2026) are included; results may not generalize to future or smaller models. Survivorship bias in ground truth: merged PTAs are built from successful trajectories only, so the ground truth inherently represents strategies that worked, potentially missing valid alternative approaches that happen to fail on SWE-bench's test suites.",
   "rai:personalSensitiveInformation": "This dataset does not contain personally identifiable information (PII). All trajectories are machine-generated sequences of tool calls and code edits produced by LLM-based coding agents operating on public open-source repositories. No human subjects were involved in trajectory generation. The underlying SWE-bench task descriptions reference public GitHub issues and contributors, which are already publicly available.",
   "rai:dataUseCases": "Primary use cases: (1) Training data curation for coding agents—selecting high-quality trajectories by quality score to improve agent fine-tuning, eliminating 'lucky' passes that produce correct outcomes via poor processes. (2) Process reward model training—using the 40-column quality annotations as supervision signals. (3) Agent evaluation beyond pass rates—comparing models by process quality metrics. (4) Agent debugging and failure analysis—identifying dominant waste categories per model. (5) Benchmark contamination detection—trajectories with high structural F1 but low coherence on novel tasks signal potential contamination. Not validated for: real-time agent monitoring, non-Python codebases, or production deployment decisions.",
@@ -93,17 +93,17 @@
     {
       "@type": "prov:Activity",
       "name": "Trajectory Collection",
-      "description": "Coding agent trajectories were collected by running 8 frontier LLM models on 47 SWE-bench tasks using an IDE-based agent framework. Each model attempted each task 5 times, producing approximately 40 trajectories per task (1,815 total). Trajectories were recorded as structured sequences of tool calls (file reads, edits, terminal commands, searches) with full inputs, outputs, and metadata."
+      "description": "Coding agent trajectories were collected by running 8 LLM backends on SWE-bench Verified tasks with the OpenHands agent scaffold, with about five attempts per model and task. The 1,815 released trajectories are those annotated against a task-level PTA; the five donor trajectories per task used to build that PTA are not included. Trajectories were recorded as structured sequences of tool calls (file reads, edits, terminal commands, searches) with full inputs, outputs, and metadata."
     },
     {
       "@type": "prov:Activity",
       "name": "PTA Construction and Merging",
-      "description": "Each trajectory was converted into a Prefix Tree Automaton (PTA)—a state machine where each state represents a tool-call observation and resulting codebase state. For each task, 5 passing trajectories (selected with seed=42) were merged into a ground-truth PTA using state equivalence checking (observation hash + resulting state hash matching). The merged PTA captures the canonical solution workflow."
+      "description": "Each trajectory was converted into a Prefix Tree Acceptor (PTA)—a state machine where each state is an intent-labeled agent action. For quality annotation, five passing trajectories per task (selected with seed=42) were merged into a task-level PTA using a state-equivalence cascade (content hash, file scope, line-range overlap, and terminal-command grouping). The released ground_truth/ PTAs merge all passing trajectories of each task. Merged PTAs encode the known-good solution strategies for a task."
     },
     {
       "@type": "prov:Activity",
       "name": "Quality Annotation",
-      "description": "Each non-seed trajectory was matched against the merged PTA to compute quality metrics: coverage (% of GT states matched), coherence (forward-progress ratio), workflow similarity (stage-transition LCS), stage completeness, and temporal profile alignment. An overall quality_score (0-100) was computed as a weighted combination. Waste detection identified 5 categories of inefficiency (regression loops, blind retries, redundant reads, unnecessary exploration, cyclic patterns), all GT-aware—patterns present in the reference PTA were excluded. Quality tiers (Ideal/Solid/Lucky for passing; partial_fail/off_track for failing) were assigned based on quality_score thresholds."
+      "description": "Each non-seed trajectory was matched against the merged PTA to compute quality metrics: coverage (% of GT states matched), coherence (forward-progress ratio), workflow similarity (stage-transition LCS), stage completeness, and temporal profile alignment. An overall quality_score (0-100) was computed as a weighted combination. Waste detection identified 5 categories of inefficiency (regression loops, blind retries, redundant steps, unnecessary exploration, cyclic patterns), all GT-aware—patterns present in the reference PTA were excluded. Quality tiers (Ideal/Solid/Lucky for passing; partial_fail/off_track for failing) were assigned based on quality_score thresholds."
     }
   ],
   "distribution": [
@@ -469,7 +469,7 @@
           "@type": "cr:Field",
           "@id": "trajectories/redundant_step_waste",
           "name": "redundant_step_waste",
-          "description": "Number of wasted steps attributed to redundant reads.",
+          "description": "Number of wasted steps attributed to redundant steps.",
           "dataType": "sc:Integer",
           "source": { "fileObject": { "@id": "trajectories-csv" }, "extract": { "column": "redundant_step_waste" } }
         },
