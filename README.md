@@ -6,13 +6,29 @@ Priyam Sahoo, Gaurav Mittal, Xiaomin Li, Shengjie Ma, Benjamin Steenhoek, Pingpi
 
 [[Project Page]](https://agentlens-framework.github.io/agentlens/) [[Paper]](https://arxiv.org/abs/2605.12925) [[NeurIPS 2026 Poster]](https://neurips.cc/virtual/2026/loc/sydney/poster/138951)
 
-AgentLens applies state-machine methodology to analyze coding agent behavior. It extends a proven approach from UX testing agents to code-agent/SWE-bench evaluation. Key capabilities include:
+AgentLens evaluates *how* a coding agent solved a task, not only whether its patch passed the tests. It:
 
-- Collecting agent trajectories that successfully resolve issues
-- Constructing a dominator tree from these trajectories to show that it can:
-(1) Identify key steps (e.g., read issue → locate code → modify → test)
-(2) Detect failure cases where critical steps are skipped
-(3) Produce interpretable diagnostic reports
+- Labels every agent action with an intent stage (Exploration, Implementation, Verification, Orchestration) using the trajectory's history, not just the tool name
+- Merges several passing trajectories for the same task into a Prefix Tree Acceptor (PTA), a reference graph of known-good solution strategies
+- Scores a new trajectory against that reference and reports a quality score and tier (Ideal, Solid, or Lucky for passing runs), the step where it diverged, and wasted steps in five categories
+
+The scoring used in the paper is deterministic and needs no LLM calls.
+
+## Installation
+
+Requires Python 3.9 or later.
+
+```bash
+git clone https://github.com/agentlens-framework/agentlens.git
+cd agentlens/sdk
+pip install -e .
+```
+
+Then:
+
+- **Score trajectories with the SDK:** see the [SDK quick start](sdk/README.md#quick-start).
+- **Load the dataset:** see the [AgentLens-Bench quick start](agentlens-bench/README.md#quick-start). It needs only `pandas` (plus `pyarrow` for the Parquet files).
+- **Reproduce the paper's experiments:** see [`experiments/README.md`](experiments/README.md).
 
 ## AgentLens Webapp
 

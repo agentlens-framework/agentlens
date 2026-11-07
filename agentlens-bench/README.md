@@ -39,10 +39,10 @@ To our knowledge, **no existing coding agent benchmark provides process-level qu
 ### Practical Use Cases
 
 - **Training data curation**: Select Top-k trajectories by quality score → eliminate all Lucky passes, raise coherence from 0.576 to 0.816 (Top-25). Directly addresses the quality problem in SWE-Gym/R2E-Gym training pipelines.
-- **Process reward model training**: Use the 40-column annotations as supervision signals for training lightweight reward models that assess trajectory quality without running tests.
+- **Process reward model training** (not yet validated): Use the 40-column annotations as supervision signals for training lightweight reward models that assess trajectory quality without running tests.
 - **Model selection beyond pass rates**: Compare agent configurations by process quality—models with identical pass rates can differ by 5+ quality points and 34% in wasted steps.
 - **Agent debugging**: Identify which waste category dominates a model's failures, with per-tool attribution (e.g., 42% of blind retries come from terminal commands).
-- **Benchmark contamination detection**: Trajectories with high structural F1 but low coherence on supposedly novel tasks are contamination signals.
+- **Benchmark contamination detection** (not yet validated): Trajectories with high structural F1 but low coherence on supposedly novel tasks may signal contamination.
 
 ### Comparison with Existing Datasets
 
@@ -77,7 +77,7 @@ To our knowledge, **no existing coding agent benchmark provides process-level qu
 
 | Metric | Value |
 |--------|-------|
-| Tasks | 47 (filtered to tasks with ≥5 passing trajectories) |
+| Tasks | 47 of 60 (tasks with enough passing trajectories to build a task-level PTA) |
 | Trajectories | 1,815 (1,136 pass / 679 fail) |
 | Models | 8 (sonnet-4.5, opus-4.5, opus-4.6, gpt-4o, gpt-4.1, gpt-5.2-codex, gpt-5.3-codex, gemini-2.5-pro) |
 | Ground Truth | k=5 merged PTA per task (seed=42) |
@@ -89,6 +89,27 @@ To our knowledge, **no existing coding agent benchmark provides process-level qu
 | Ideal | 229 | 20.2% | quality_score ≥ 70 |
 | Solid | 785 | 69.1% | 47 ≤ quality_score < 70 |
 | Lucky | 122 | 10.7% | quality_score < 47 |
+
+Failing trajectories are labeled `partial_fail` (quality_score ≥ 40) or `off_track` (quality_score < 40).
+
+### Note on `quality_score`
+
+The report score includes a 10% outcome term (O = 100 for passing, 0 for failing trajectories), so one number reflects both what an agent achieved and how it worked:
+
+```
+quality_score = 0.25·coverage_percent + 0.25·(100·coherence_score) + 0.18·(100·stage_completeness)
+              + 0.12·(100·workflow_similarity) + 0.10·f1_score + 0.10·O      (rounded, clipped to 0–100)
+```
+
+The term adds the same amount to every trajectory with the same outcome, so it does not change the ranking within passing or within failing trajectories, the tier assignments, the per-model Lucky rates, or the model ranking in the paper's Table 2. It is also small enough that near-miss failures can still outscore weak passes: 31% of failing trajectories score above every Lucky Pass.
+
+Because the column contains the outcome, do not use it to measure how well process quality predicts pass/fail. The paper's pass/fail evaluation uses a separate outcome-free combined score (Section 5.3, AUROC 0.766). For an outcome-free process score, subtract 10 from passing rows:
+
+```python
+df["process_score"] = df["quality_score"] - 10 * df["passed"]
+```
+
+The Lucky cutoff of 47 is the pass/fail threshold of the outcome-free combined score selected on the pilot calibration set (Youden's J, 46.4), rounded up and held fixed for the full evaluation. Because of the outcome term, a passing trajectory is Lucky when its `process_score` is below 37.
 
 ### Curation Table
 
@@ -113,12 +134,12 @@ agentlens-bench/
 │   └── curation_table.json            # Quality-guided curation stats
 ├── trajectories/                      # Tier 2: Individual PTA JSONs
 │   └── {task_id}/
-│       └── {trajectory_id}.json       # 1,815 files
+│       └── {trajectory_id}_pta.json   # 1,815 files
 ├── ground_truth/                      # Tier 2: Merged PTA per task
 │   └── {task_id}_merged_pta.json      # 47 files
 └── analysis/                          # Tier 3: Full quality reports
     └── {task_id}/
-        └── {trajectory_id}_report.json  # 1,815 files
+        └── {trajectory_id}_pta_report.json  # 1,815 files
 ```
 
 ## Column Reference (annotations/trajectories)
@@ -135,14 +156,14 @@ agentlens-bench/
 ### Quality Metrics
 | Column | Type | Description |
 |--------|------|-------------|
-| `quality_score` | int | Overall quality score (0–100) |
-| `quality_tier` | str | ideal / solid / lucky / partial_fail / off_track |
-| `verdict` | str | Human-readable quality verdict |
-| `coverage_percent` | float | % of ground-truth states matched |
+| `quality_score` | int | Report quality score (0–100), including a 10% outcome term; see [Note on `quality_score`](#note-on-quality_score) |
+| `quality_tier` | str | ideal / solid / lucky (passing); partial_fail / off_track (failing) |
+| `verdict` | str | Five-level verdict: PASS, LIKELY PASS, UNCERTAIN, LIKELY FAIL, FAIL |
+| `coverage_percent` | float | % of states on the best-matching GT path that were matched |
 | `precision_percent` | float | % of candidate states that matched GT |
 | `f1_score` | float | Harmonic mean of coverage and precision |
-| `coherence_score` | float | Forward-progress coherence (0–1) |
-| `temporal_profile_score` | float | Stage timing similarity (0–1) |
+| `coherence_score` | float | Forward-progress coherence of the trajectory's own stage sequence (0–1) |
+| `temporal_profile_score` | float | 1 − mean Jensen-Shannon divergence of stage distributions over three segments (0–1) |
 | `workflow_similarity` | float | Stage-transition LCS ratio (0–1) |
 | `stage_completeness` | float | Fraction of GT stages covered (0–1) |
 | `bottleneck_coverage` | float | Minimum per-stage coverage (0–100) |
@@ -185,9 +206,9 @@ agentlens-bench/
 
 ## Methodology
 
-1. **Ground Truth Construction**: For each task, 5 passing trajectories (selected with seed=42) are merged into a Program Trace Automaton (PTA) that captures the canonical solution workflow.
+1. **Ground Truth Construction**: For each task, 5 passing trajectories (selected with seed=42) are merged into a Prefix Tree Acceptor (PTA) that captures the known-good solution strategies.
 
-2. **Quality Assessment**: Each remaining trajectory is matched against the merged PTA using state equivalence checking. The quality_score (0–100) integrates coverage, coherence, workflow similarity, and stage completeness.
+2. **Quality Assessment**: Each remaining trajectory is matched against the merged PTA using state equivalence checking. The quality_score (0–100) combines coverage, coherence, stage completeness, workflow similarity, structural F1, and a 10% outcome term (see [Note on `quality_score`](#note-on-quality_score)).
 
 3. **Waste Detection**: Five categories of inefficiency are detected, all GT-aware (patterns present in the merged PTA are excluded):
    - **Regression loops**: E→I→E backtrack patterns
