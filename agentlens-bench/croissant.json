@@ -18,6 +18,7 @@
       "@id": "cr:dataType",
       "@type": "@vocab"
     },
+    "equivalentProperty": "cr:equivalentProperty",
     "examples": {
       "@id": "cr:examples",
       "@type": "@json"
@@ -40,6 +41,7 @@
     "regex": "cr:regex",
     "repeated": "cr:repeated",
     "replace": "cr:replace",
+    "samplingRate": "cr:samplingRate",
     "separator": "cr:separator",
     "source": "cr:source",
     "subField": "cr:subField",
@@ -53,6 +55,7 @@
   "license": "https://spdx.org/licenses/CC-BY-4.0.html",
   "version": "1.0",
   "datePublished": "2026-05-04",
+  "dateModified": "2026-11-06",
   "isLiveDataset": false,
   "citeAs": "Priyam Sahoo, Gaurav Mittal, Xiaomin Li, Shengjie Ma, Benjamin Steenhoek, Pingping Lin, and Yu Hu. AgentLens: Revealing The Lucky Pass Problem in SWE-Agent Evaluation. In Advances in Neural Information Processing Systems (NeurIPS), 2026. arXiv:2605.12925.",
   "creator": [
@@ -64,7 +67,10 @@
     {"@type": "sc:Person", "name": "Pingping Lin"},
     {"@type": "sc:Person", "name": "Yu Hu"}
   ],
-  "sameAs": "https://arxiv.org/abs/2605.12925",
+  "sameAs": [
+    "https://arxiv.org/abs/2605.12925",
+    "https://agentlens-framework.github.io/agentlens/"
+  ],
   "keywords": [
     "coding agents",
     "trajectory analysis",
@@ -76,24 +82,24 @@
     "waste detection",
     "training data curation"
   ],
-  "rai:dataLimitations": "The dataset covers 47 SWE-bench tasks filtered to those with at least 5 passing trajectories out of an initial 60 tasks. It includes trajectories from 8 specific frontier LLM models (Claude Sonnet 4.5, Opus 4.5, Opus 4.6; GPT-4o, GPT-4.1, GPT-5.2-codex, GPT-5.3-codex; Gemini 2.5 Pro) run with the OpenHands agent scaffold only. Results may not generalize to other agent scaffolds (e.g., terminal-only agents, multi-agent systems), other programming languages (SWE-bench is Python-heavy), or other task domains beyond bug-fixing in open-source repositories. Quality annotations are computed against task-level PTAs merged from five passing trajectories per task, which may not capture all valid solution strategies. The dataset should not be used as a definitive quality ranking of the included models, as evaluation conditions may vary.",
+  "rai:dataLimitations": "The dataset covers the 47 of an initial 60 SWE-bench Verified tasks with enough passing trajectories to build a task-level PTA. It includes trajectories from 8 specific frontier LLM models (Claude Sonnet 4.5, Opus 4.5, Opus 4.6; GPT-4o, GPT-4.1, GPT-5.2-codex, GPT-5.3-codex; Gemini 2.5 Pro) run with the OpenHands agent scaffold only. Results may not generalize to other agent scaffolds (e.g., terminal-only agents, multi-agent systems), other programming languages (SWE-bench is Python-heavy), or other task domains beyond bug-fixing in open-source repositories. Quality annotations are computed against task-level PTAs merged from five passing trajectories per task, which may not capture all valid solution strategies. The dataset should not be used as a definitive quality ranking of the included models, as evaluation conditions may vary. The quality_score column includes a pass/fail outcome term (10 points for passing trajectories), so it should not be used on its own to measure how well process quality predicts the outcome; the paper's pass/fail evaluation uses a separate outcome-free combined score.",
   "rai:dataBiases": "Selection bias: tasks are drawn from SWE-bench, which overrepresents well-maintained Python open-source projects (Django, scikit-learn, matplotlib, etc.) and may not reflect the distribution of real-world software engineering tasks. Model selection bias: only frontier models available at the time of collection (early 2026) are included; results may not generalize to future or smaller models. Survivorship bias in ground truth: merged PTAs are built from successful trajectories only, so the ground truth inherently represents strategies that worked, potentially missing valid alternative approaches that happen to fail on SWE-bench's test suites.",
   "rai:personalSensitiveInformation": "This dataset does not contain personally identifiable information (PII). All trajectories are machine-generated sequences of tool calls and code edits produced by LLM-based coding agents operating on public open-source repositories. No human subjects were involved in trajectory generation. The underlying SWE-bench task descriptions reference public GitHub issues and contributors, which are already publicly available.",
-  "rai:dataUseCases": "Primary use cases: (1) Training data curation for coding agents—selecting high-quality trajectories by quality score to improve agent fine-tuning, eliminating 'lucky' passes that produce correct outcomes via poor processes. (2) Process reward model training—using the 40-column quality annotations as supervision signals. (3) Agent evaluation beyond pass rates—comparing models by process quality metrics. (4) Agent debugging and failure analysis—identifying dominant waste categories per model. (5) Benchmark contamination detection—trajectories with high structural F1 but low coherence on novel tasks signal potential contamination. Not validated for: real-time agent monitoring, non-Python codebases, or production deployment decisions.",
-  "rai:dataSocialImpact": "Positive: enables quality-aware training of coding agents, potentially producing agents that solve problems more efficiently with fewer wasted steps and tokens, reducing computational cost and environmental impact. Supports reproducible agent evaluation research. Risks: the waste detection methodology could theoretically be used to optimize agents for adversarial purposes (e.g., finding efficient paths to introduce vulnerabilities), though the dataset itself contains only benign bug-fixing trajectories on public open-source code. The quality tier labels should not be used to make claims about the absolute capability of specific commercial LLM products.",
+  "rai:dataUseCases": "Validated in the paper: (1) separating passing trajectories into Ideal, Solid, and Lucky tiers by process quality; (2) comparing the eight included model backends by process quality alongside pass rate, including robustness checks on shared tasks and leave-one-model-out references; (3) failure and waste analysis, such as the dominant waste categories and Lucky Pass mechanisms per model; (4) pass/fail separation by the outcome-free combined score (AUROC 0.766 on the 1,815 trajectories). The intent-stage labels behind the scores were validated against seven annotators (Fleiss' kappa 0.933). Not yet established: whether selecting training data by quality score improves fine-tuned agents (this needs a controlled fine-tuning study), use of the annotations as process-reward supervision, other agent scaffolds or programming languages, real-time monitoring, and production deployment decisions.",
+  "rai:dataSocialImpact": "Positive: enables quality-aware training of coding agents, potentially producing agents that solve problems more efficiently with fewer wasted steps and tokens, reducing computational cost and environmental impact. Supports reproducible agent evaluation research. Risks: the waste detection methodology could theoretically be used to optimize agents for adversarial purposes (e.g., finding efficient paths to introduce vulnerabilities), though the dataset itself contains only benign bug-fixing trajectories on public open-source code. The quality tier labels should not be used to make claims about the absolute capability of specific commercial LLM products. Mitigations: the release contains only bug-fixing traces on public open-source code, and the documentation positions process scores as diagnostics that complement functional correctness, security review, and human judgment, not as an approval mechanism for deploying code.",
   "rai:hasSyntheticData": false,
   "prov:wasDerivedFrom": [
     {
       "@type": "sc:Dataset",
-      "name": "SWE-bench",
-      "url": "https://www.swebench.com/"
+      "name": "SWE-bench Verified",
+      "url": "https://huggingface.co/datasets/princeton-nlp/SWE-bench_Verified"
     }
   ],
   "prov:wasGeneratedBy": [
     {
       "@type": "prov:Activity",
       "name": "Trajectory Collection",
-      "description": "Coding agent trajectories were collected by running 8 LLM backends on SWE-bench Verified tasks with the OpenHands agent scaffold, with about five attempts per model and task. The 1,815 released trajectories are those annotated against a task-level PTA; the five donor trajectories per task used to build that PTA are not included. Trajectories were recorded as structured sequences of tool calls (file reads, edits, terminal commands, searches) with full inputs, outputs, and metadata."
+      "description": "Coding agent trajectories were collected by running 8 LLM backends on SWE-bench Verified tasks with the OpenHands agent scaffold, with about five attempts per model and task. The 1,815 released trajectories are those annotated against a task-level PTA; the five donor trajectories per task used to build that PTA are not included. Trajectories were recorded as structured sequences of tool calls (file reads, edits, terminal commands, searches) with full inputs, outputs, and metadata. Collection and all later processing were carried out by the authors, using the OpenHands scaffold and each model provider's API; pass/fail labels come from the SWE-bench Verified test harness. No crowdworkers were involved."
     },
     {
       "@type": "prov:Activity",
@@ -103,10 +109,46 @@
     {
       "@type": "prov:Activity",
       "name": "Quality Annotation",
-      "description": "Each non-seed trajectory was matched against the merged PTA to compute quality metrics: coverage (% of GT states matched), coherence (forward-progress ratio), workflow similarity (stage-transition LCS), stage completeness, and temporal profile alignment. An overall quality_score (0-100) was computed as a weighted combination. Waste detection identified 5 categories of inefficiency (regression loops, blind retries, redundant steps, unnecessary exploration, cyclic patterns), all GT-aware—patterns present in the reference PTA were excluded. Quality tiers (Ideal/Solid/Lucky for passing; partial_fail/off_track for failing) were assigned based on quality_score thresholds."
+      "description": "Each non-seed trajectory was matched against the merged PTA to compute quality metrics: coverage of the best-matching PTA path, structural F1, coherence (forward-progress ratio of the trajectory's intent-stage sequence), workflow similarity (intent-stage LCS ratio), stage completeness, and temporal profile alignment. The report score is quality_score = 0.25*coverage + 0.25*(100*coherence) + 0.18*(100*stage_completeness) + 0.12*(100*workflow_similarity) + 0.10*f1 + 0.10*O, rounded and clipped to 0-100, where O is 100 for passing and 0 for failing trajectories. The outcome term shifts every trajectory with the same outcome equally, so it does not change their relative order. Waste detection identified 5 categories of inefficiency (regression loops, blind retries, redundant steps, unnecessary exploration, cyclic patterns), all GT-aware—patterns present in the reference PTA were excluded. Quality tiers were assigned from quality_score: passing trajectories are Ideal (>=70), Solid (47-69), or Lucky (<47); failing trajectories are partial_fail (>=40) or off_track (<40)."
     }
   ],
   "distribution": [
+    {
+      "@type": "cr:FileObject",
+      "@id": "github-repository",
+      "name": "github-repository",
+      "description": "The AgentLens repository, which hosts the full AgentLens-Bench release under agentlens-bench/.",
+      "contentUrl": "https://github.com/agentlens-framework/agentlens",
+      "encodingFormat": "git+https",
+      "sha256": "main"
+    },
+    {
+      "@type": "cr:FileSet",
+      "@id": "ground-truth-ptas",
+      "name": "ground-truth-ptas",
+      "description": "47 task-level merged Prefix Tree Acceptors, one JSON file per task.",
+      "containedIn": { "@id": "github-repository" },
+      "encodingFormat": "application/json",
+      "includes": "agentlens-bench/ground_truth/*.json"
+    },
+    {
+      "@type": "cr:FileSet",
+      "@id": "trajectory-ptas",
+      "name": "trajectory-ptas",
+      "description": "1,815 per-trajectory PTAs: each trajectory's intent-labeled state sequence, one JSON file per trajectory, grouped by task.",
+      "containedIn": { "@id": "github-repository" },
+      "encodingFormat": "application/json",
+      "includes": "agentlens-bench/trajectories/*/*.json"
+    },
+    {
+      "@type": "cr:FileSet",
+      "@id": "quality-reports",
+      "name": "quality-reports",
+      "description": "1,815 per-trajectory quality reports from matching each trajectory against its task-level PTA: scores, waste instances, divergence points, and stage comparison, one JSON file per trajectory, grouped by task.",
+      "containedIn": { "@id": "github-repository" },
+      "encodingFormat": "application/json",
+      "includes": "agentlens-bench/analysis/*/*.json"
+    },
     {
       "@type": "cr:FileObject",
       "@id": "dataset-summary",
@@ -301,7 +343,7 @@
           "@type": "cr:Field",
           "@id": "trajectories/quality_score",
           "name": "quality_score",
-          "description": "Overall quality score (0-100) integrating coverage, coherence, workflow similarity, and stage completeness.",
+          "description": "Report quality score (0-100): 0.25*coverage_percent + 0.25*(100*coherence_score) + 0.18*(100*stage_completeness) + 0.12*(100*workflow_similarity) + 0.10*f1_score + 0.10*O, rounded and clipped, where O is 100 if passed and 0 otherwise. Because of the outcome term, use this column for tiers and for comparisons within the same outcome, not as a pass/fail predictor; subtract 10 from passing rows for an outcome-free score.",
           "dataType": "sc:Integer",
           "source": { "fileObject": { "@id": "trajectories-csv" }, "extract": { "column": "quality_score" } }
         },
@@ -309,7 +351,7 @@
           "@type": "cr:Field",
           "@id": "trajectories/quality_tier",
           "name": "quality_tier",
-          "description": "Quality tier classification: ideal (score>=70), solid (47<=score<70), lucky (score<47), partial_fail, or off_track.",
+          "description": "Quality tier classification from quality_score. Passing trajectories: ideal (score>=70), solid (47<=score<70), lucky (score<47). Failing trajectories: partial_fail (score>=40) or off_track (score<40).",
           "dataType": "sc:Text",
           "source": { "fileObject": { "@id": "trajectories-csv" }, "extract": { "column": "quality_tier" } }
         },
@@ -317,7 +359,7 @@
           "@type": "cr:Field",
           "@id": "trajectories/verdict",
           "name": "verdict",
-          "description": "Human-readable quality verdict.",
+          "description": "Five-level verdict predicted from the matching metrics: PASS, LIKELY PASS, UNCERTAIN, LIKELY FAIL, or FAIL.",
           "dataType": "sc:Text",
           "source": { "fileObject": { "@id": "trajectories-csv" }, "extract": { "column": "verdict" } }
         },
@@ -325,7 +367,7 @@
           "@type": "cr:Field",
           "@id": "trajectories/coverage_percent",
           "name": "coverage_percent",
-          "description": "Percentage of ground-truth PTA states matched by this trajectory (0-100).",
+          "description": "Percentage of the states on the best-matching ground-truth PTA path that this trajectory matched (0-100).",
           "dataType": "sc:Float",
           "source": { "fileObject": { "@id": "trajectories-csv" }, "extract": { "column": "coverage_percent" } }
         },
@@ -349,7 +391,7 @@
           "@type": "cr:Field",
           "@id": "trajectories/coherence_score",
           "name": "coherence_score",
-          "description": "Forward-progress coherence ratio (0-1). Higher values indicate more consistent forward progress through the ground-truth PTA.",
+          "description": "Trajectory coherence (0-1), computed from the trajectory's own intent-stage sequence: the forward-progress ratio, penalized for backtracks and blind retries. Higher values indicate more consistent forward progress.",
           "dataType": "sc:Float",
           "source": { "fileObject": { "@id": "trajectories-csv" }, "extract": { "column": "coherence_score" } }
         },
@@ -357,7 +399,7 @@
           "@type": "cr:Field",
           "@id": "trajectories/temporal_profile_score",
           "name": "temporal_profile_score",
-          "description": "Stage timing similarity score (0-1). Measures how closely the trajectory's stage timing matches the ground truth.",
+          "description": "Temporal profile similarity (0-1): one minus the mean Jensen-Shannon divergence between the trajectory's and the PTA's intent-stage distributions over the early, middle, and late thirds of the trajectory.",
           "dataType": "sc:Float",
           "source": { "fileObject": { "@id": "trajectories-csv" }, "extract": { "column": "temporal_profile_score" } }
         },
